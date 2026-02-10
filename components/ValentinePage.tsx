@@ -5,6 +5,7 @@ import Image from "next/image";
 import { useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { valentineConfig, replaceSenderName } from "@/config/valentine";
+import { CelebrationOverlay } from "@/components/CelebrationOverlay";
 import { FloatingHearts } from "@/components/FloatingHearts";
 
 const MusicToggle = memo(function MusicToggle({
@@ -22,7 +23,7 @@ const MusicToggle = memo(function MusicToggle({
       transition={{ delay: 1 }}
       onClick={onToggle}
       aria-label={musicOn ? "Mute background music" : "Play background music"}
-      className="fixed bottom-5 right-5 z-50 flex h-11 w-11 items-center justify-center rounded-full border border-pink-200/80 bg-white/90 shadow-[0_4px_16px_-4px_rgba(190,18,60,0.15)] backdrop-blur-sm transition-colors hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-400/60 focus-visible:ring-offset-2 focus-visible:ring-offset-pink-50 sm:bottom-6 sm:right-6"
+      className="fixed bottom-5 right-5 z-50 flex h-12 min-h-[48px] w-12 min-w-[48px] items-center justify-center rounded-full border border-pink-200/80 bg-white/90 shadow-[0_4px_16px_-4px_rgba(190,18,60,0.15)] backdrop-blur-sm transition-colors hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-400/60 focus-visible:ring-offset-2 focus-visible:ring-offset-pink-50 active:scale-95 sm:bottom-6 sm:right-6 sm:h-11 sm:min-h-0 sm:min-w-0 sm:w-11"
     >
       <span className="text-xl" aria-hidden="true">
         {musicOn ? "🔊" : "🔇"}
@@ -37,6 +38,15 @@ function getRecipientName(
   const name = searchParams.get("name");
   if (!name || typeof name !== "string") return null;
   const trimmed = name.trim();
+  return trimmed.length > 0 ? trimmed : null;
+}
+
+function getSenderName(
+  searchParams: ReturnType<typeof useSearchParams>,
+): string | null {
+  const sender = searchParams.get("sender");
+  if (!sender || typeof sender !== "string") return null;
+  const trimmed = sender.trim();
   return trimmed.length > 0 ? trimmed : null;
 }
 
@@ -74,6 +84,12 @@ export function ValentinePage() {
     return raw ? capitalizeName(raw) : null;
   }, [searchParams]);
 
+  const senderName = useMemo(() => {
+    const fromUrl = getSenderName(searchParams);
+    const name = fromUrl ? capitalizeName(fromUrl) : valentineConfig.senderName;
+    return name.trim() || valentineConfig.senderName;
+  }, [searchParams]);
+
   const [noClickCount, setNoClickCount] = useState(0);
   const [noOffsets, setNoOffsets] = useState({ x: 0, y: 0 });
   const [yesScale, setYesScale] = useState(1);
@@ -82,6 +98,7 @@ export function ValentinePage() {
   const [isConfettiRunning, setIsConfettiRunning] = useState(false);
   const [musicOn, setMusicOn] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const noMovedAtRef = useRef<number>(0);
   const musicSrc = valentineConfig.backgroundMusic ?? null;
 
   const headlineLine1 = useMemo(
@@ -104,13 +121,23 @@ export function ValentinePage() {
     [noClickCount],
   );
 
-  const handleNoHover = useCallback(() => {
-    const randomX = (Math.random() - 0.5) * 140;
-    const randomY = (Math.random() - 0.5) * 80;
+  const handleNoMove = useCallback(() => {
+    const isNarrow = typeof window !== "undefined" && window.innerWidth < 640;
+    const rangeX = isNarrow ? 180 : 140;
+    const rangeY = isNarrow ? 100 : 80;
+    const randomX = (Math.random() - 0.5) * rangeX;
+    const randomY = (Math.random() - 0.5) * rangeY;
     setNoOffsets({ x: randomX, y: randomY });
+    noMovedAtRef.current = Date.now();
   }, []);
 
+  const handleNoTouchStart = useCallback(() => {
+    handleNoMove();
+  }, [handleNoMove]);
+
   const handleNoClick = useCallback(() => {
+    const movedRecently = Date.now() - noMovedAtRef.current < 400;
+    if (movedRecently) return;
     setNoClickCount((previous) => previous + 1);
     setYesScale((previous) => Math.min(previous + 0.2, 3));
     setNoScale((previous) => Math.max(previous - 0.08, 0.5));
@@ -216,6 +243,12 @@ export function ValentinePage() {
         <MusicToggle musicOn={musicOn} onToggle={toggleMusic} />
       )}
       <FloatingHearts />
+      {isAccepted && (
+        <CelebrationOverlay
+          cornerCatSrc={valentineConfig.images.cornerCat}
+          huggingCatSrc={valentineConfig.images.huggingCat}
+        />
+      )}
       <AnimatePresence mode="wait">
         {!isAccepted && (
           <motion.section
@@ -236,7 +269,7 @@ export function ValentinePage() {
               duration: MOTION.duration.entrance,
               ease: MOTION.ease,
             }}
-            className="relative mt-5 w-full max-w-xl overflow-hidden rounded-2xl border border-pink-200/80 bg-white p-6 shadow-[0_4px_24px_-4px_rgba(190,18,60,0.12),0_0_1px_0_rgba(0,0,0,0.04)] sm:mt-0 sm:rounded-3xl sm:p-10 md:p-12"
+            className="relative mt-4 w-full max-w-xl overflow-hidden rounded-2xl border border-pink-200/80 bg-white px-5 py-6 shadow-[0_4px_24px_-4px_rgba(190,18,60,0.12),0_0_1px_0_rgba(0,0,0,0.04)] sm:mt-0 sm:rounded-3xl sm:px-10 sm:py-10 md:p-12"
           >
             <div className="pointer-events-none absolute inset-0">
               <div className="absolute -left-24 -top-24 h-64 w-64 rounded-full bg-rose-100/60 blur-3xl" />
@@ -335,7 +368,7 @@ export function ValentinePage() {
                   delay: MOTION.stagger * 4,
                   ease: MOTION.easeOut,
                 }}
-                className="mt-1 flex w-full flex-col items-center justify-center gap-4 sm:flex-row sm:gap-5"
+                className="mt-1 flex w-full flex-col items-center justify-center gap-5 sm:flex-row sm:gap-5"
               >
                 <motion.button
                   type="button"
@@ -355,7 +388,7 @@ export function ValentinePage() {
                   transition={{ type: "spring", stiffness: 280, damping: 20 }}
                   onClick={handleYesClick}
                   disabled={isConfettiRunning}
-                  className={`inline-flex items-center justify-center rounded-full bg-linear-to-r from-rose-500 via-pink-500 to-rose-600 px-8 py-3.5 text-[0.9375rem] font-semibold text-white shadow-[0_4px_14px_-2px_rgba(190,18,60,0.35)] transition-shadow duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-400/60 focus-visible:ring-offset-2 focus-visible:ring-offset-white ${yesCursorClasses}`}
+                  className={`inline-flex min-h-[48px] min-w-[140px] shrink-0 touch-manipulation items-center justify-center rounded-full bg-linear-to-r from-rose-500 via-pink-500 to-rose-600 px-8 py-4 text-[0.9375rem] font-semibold text-white shadow-[0_4px_14px_-2px_rgba(190,18,60,0.35)] transition-shadow duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-400/60 focus-visible:ring-offset-2 focus-visible:ring-offset-white active:scale-[0.98] sm:min-h-0 sm:min-w-0 sm:py-3.5 ${yesCursorClasses}`}
                 >
                   <span className="mr-1.5">Yes</span>
                   <span aria-hidden="true" className="text-lg">
@@ -364,7 +397,7 @@ export function ValentinePage() {
                 </motion.button>
 
                 <motion.div
-                  className="relative h-11 w-full sm:h-auto sm:w-auto origin-center"
+                  className="relative min-h-[48px] w-full min-w-0 sm:h-auto sm:w-auto origin-center"
                   animate={{
                     x: noOffsets.x,
                     y: noOffsets.y,
@@ -378,7 +411,8 @@ export function ValentinePage() {
                 >
                   <motion.button
                     type="button"
-                    onMouseEnter={handleNoHover}
+                    onMouseEnter={handleNoMove}
+                    onTouchStart={handleNoTouchStart}
                     onClick={handleNoClick}
                     whileHover={{
                       scale: 1.03,
@@ -387,7 +421,7 @@ export function ValentinePage() {
                         "0 4px 12px -2px rgba(0,0,0,0.08), 0 0 0 1px rgba(255,255,255,0.6) inset",
                     }}
                     whileTap={{ scale: 0.98, y: 0 }}
-                    className={`inline-flex h-11 w-full items-center justify-center rounded-full border border-pink-200 bg-pink-50/80 px-5 text-[0.875rem] font-medium text-stone-600 shadow-sm transition-shadow duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-400/50 focus-visible:ring-offset-2 focus-visible:ring-offset-white sm:w-auto ${noCursorClasses}`}
+                    className={`inline-flex h-12 min-h-[48px] w-full min-w-[48px] touch-manipulation items-center justify-center rounded-full border border-pink-200 bg-pink-50/80 px-6 py-3.5 text-[0.875rem] font-medium text-stone-600 shadow-sm transition-shadow duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-400/50 focus-visible:ring-offset-2 focus-visible:ring-offset-white active:scale-[0.98] sm:h-11 sm:min-h-0 sm:min-w-0 sm:w-auto sm:px-5 ${noCursorClasses}`}
                   >
                     <span className="mr-1.5">
                       {noClickCount === 0 ? "No" : noButtonLabel}
@@ -409,7 +443,7 @@ export function ValentinePage() {
                   duration: MOTION.duration.normal,
                   delay: MOTION.stagger * 5,
                 }}
-                className="mt-6 inline-flex items-center gap-1.5 text-[0.8125rem] font-medium text-rose-600 underline decoration-rose-200 underline-offset-2 transition-colors hover:text-rose-700 hover:decoration-rose-400 cursor-pointer sm:mt-8 sm:text-sm"
+                className="mt-6 inline-flex min-h-[44px] flex-wrap items-center justify-center gap-1.5 py-2 text-[0.8125rem] font-medium text-rose-600 underline decoration-rose-200 underline-offset-2 transition-colors hover:text-rose-700 hover:decoration-rose-400 cursor-pointer sm:mt-8 sm:text-sm"
               >
                 Create Your Own Custom Valentine Page →
               </motion.a>
@@ -420,15 +454,15 @@ export function ValentinePage() {
         {isAccepted && (
           <motion.section
             key="valentine-accepted"
-            initial={{ opacity: 0, scale: 0.94, y: 20 }}
+            initial={{ opacity: 0, scale: 0.88, y: 24 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.96 }}
             transition={{
-              duration: MOTION.duration.entrance,
-              delay: MOTION.duration.fast,
+              duration: 0.56,
+              delay: 1.1,
               ease: MOTION.ease,
             }}
-            className="relative mt-5 w-full max-w-xl overflow-hidden rounded-2xl border border-pink-200/80 bg-white p-6 text-center shadow-[0_4px_24px_-4px_rgba(190,18,60,0.12),0_0_1px_0_rgba(0,0,0,0.04)] sm:mt-0 sm:rounded-3xl sm:p-10 md:p-12"
+            className="relative z-40 mt-5 w-full max-w-xl overflow-hidden rounded-2xl border border-pink-200/80 bg-white p-6 text-center shadow-[0_4px_24px_-4px_rgba(190,18,60,0.12),0_0_1px_0_rgba(0,0,0,0.04)] sm:mt-0 sm:rounded-3xl sm:p-10 md:p-12"
           >
             <div className="pointer-events-none absolute inset-0">
               <div className="absolute inset-x-12 top-0 h-44 bg-linear-to-b from-rose-50/70 via-pink-50/40 to-transparent blur-3xl" />
@@ -498,10 +532,7 @@ export function ValentinePage() {
                 }}
                 className="max-w-md text-balance text-[0.9375rem] leading-[1.6] text-stone-600 sm:text-base sm:leading-[1.65]"
               >
-                {replaceSenderName(
-                  valentineConfig.success.message,
-                  valentineConfig.senderName,
-                )}
+                {replaceSenderName(valentineConfig.success.message, senderName)}
               </motion.p>
 
               <motion.p
@@ -515,7 +546,7 @@ export function ValentinePage() {
               >
                 {replaceSenderName(
                   valentineConfig.success.signature,
-                  valentineConfig.senderName,
+                  senderName,
                 )}
               </motion.p>
 
@@ -529,7 +560,7 @@ export function ValentinePage() {
                   duration: MOTION.duration.normal,
                   delay: MOTION.stagger * 5,
                 }}
-                className="mt-6 inline-flex items-center gap-1.5 text-[0.8125rem] font-medium text-rose-600 underline decoration-rose-200 underline-offset-2 transition-colors hover:text-rose-700 hover:decoration-rose-400 cursor-pointer sm:mt-8 sm:text-sm"
+                className="mt-6 inline-flex min-h-[44px] flex-wrap items-center justify-center gap-1.5 py-2 text-[0.8125rem] font-medium text-rose-600 underline decoration-rose-200 underline-offset-2 transition-colors hover:text-rose-700 hover:decoration-rose-400 cursor-pointer sm:mt-8 sm:text-sm"
               >
                 Create Your Own Custom Valentine Page →
               </motion.a>

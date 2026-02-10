@@ -24,7 +24,7 @@ Edit **`config/valentine.ts`**.
 | **noButtonMessages** | Array of 5 messages when the user clicks “No” |
 | **success.headline** | Title on the success screen (e.g. `"You said yes!"`) |
 | **success.message** | Invite paragraph. Use `{senderName}` and it will be replaced with **senderName** (e.g. “from Rushi”). |
-| **success.signature** | Sign-off (e.g. `"With love, {senderName}"`) |
+| **success.signature** | Sign-off (e.g. `"With love"` or `"With love, {senderName}"` to include your name) |
 | **images.cornerCat** | Image path for the top-right cat (question + success) |
 | **images.cryingCat** | GIF shown when the user clicks “No” |
 | **images.huggingCat** | GIF shown when the user clicks “Yes” |
@@ -35,7 +35,16 @@ Edit **`config/valentine.ts`**.
 - Put your images in the **`public/`** folder.
 - In config, use paths starting with `/`, e.g. `/crying_cat.gif`, `/my-photo.png`.
 
-## 4. Reselling
+## 4. URL parameters
+
+You can override the **recipient** and **sender** via the URL so one deployment can serve many links:
+
+- **`?name=Jane`** — Uses “Jane” as the recipient (headline, success headline, and meta).
+- **`?sender=Rushi`** — Uses “Rushi” wherever the sender name appears (e.g. in the success message and “With love, {senderName}”). If omitted, the value from **senderName** in config is used.
+
+Example: `https://yoursite.com?name=Jane&sender=Rushi`
+
+## 5. Reselling
 
 - Give buyers **only** `config/valentine.ts` (and optionally this CUSTOMIZATION.md) as the “edit this to customize” surface.
 - They don’t need to touch components or layout; everything reads from this config.
