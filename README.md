@@ -1,36 +1,48 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Will You Be My Valentine? — Template
 
-## Getting Started
+A cute, animated Valentine’s Day landing page. One question, two buttons, confetti when they say yes.
 
-First, run the development server:
+![Valentine template](https://images.unsplash.com/photo-1518199266791-5375a83190b7?w=800&q=80)
+
+## Features
+
+- **Animated question card** — Smooth entrance, floating hearts background
+- **“Yes” / “No” buttons** — No button moves on hover and shrinks on each click; Yes button grows
+- **Crying cat GIF** when they click “No”
+- **Confetti + success screen** when they click “Yes”, with hugging cat GIF
+- **One-file customization** — All copy, names, and image paths in `config/valentine.ts`
+- **Responsive** — Works on mobile and desktop
+- **Tech** — Next.js (App Router), Tailwind CSS, Framer Motion, canvas-confetti
+
+## Quick start
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Customize (for you or your customers)
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Edit **`config/valentine.ts`** only. No need to touch components.
 
-## Learn More
+- **Names & copy** — `senderName`, headline, promise text, success message, “No” button messages
+- **Images** — Paths for corner cat, crying cat GIF, hugging cat GIF (put files in `public/`)
+- **Site** — Title, description, favicon
 
-To learn more about Next.js, take a look at the following resources:
+See **CUSTOMIZATION.md** for a full field-by-field guide.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Deploy
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Deploy to [Vercel](https://vercel.com) (or any Next.js host):
 
-## Deploy on Vercel
+```bash
+npm run build
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Set no env vars required; config is in code.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## License
+
+MIT (or your chosen license for resale).
