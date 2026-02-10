@@ -20,9 +20,18 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+const siteUrl = valentineConfig.site.url ?? undefined;
+
 export const metadata: Metadata = {
+  metadataBase: siteUrl ? new URL(siteUrl) : undefined,
   title: valentineConfig.site.title,
   description: valentineConfig.site.description,
+  keywords: valentineConfig.site.keywords,
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: { index: true, follow: true },
+  },
   icons: {
     icon: valentineConfig.site.favicon,
   },
@@ -30,12 +39,27 @@ export const metadata: Metadata = {
     title: valentineConfig.site.title,
     description: valentineConfig.site.description,
     type: "website",
+    ...(siteUrl && { url: siteUrl }),
+    ...(valentineConfig.site.ogImage && {
+      images: [
+        {
+          url: valentineConfig.site.ogImage,
+          width: 1200,
+          height: 630,
+          alt: valentineConfig.site.title,
+        },
+      ],
+    }),
   },
   twitter: {
-    card: "summary_large_image",
+    card: valentineConfig.site.ogImage ? "summary_large_image" : "summary",
     title: valentineConfig.site.title,
     description: valentineConfig.site.description,
+    ...(valentineConfig.site.ogImage && {
+      images: [valentineConfig.site.ogImage],
+    }),
   },
+  alternates: siteUrl ? { canonical: siteUrl } : undefined,
 };
 
 export default function RootLayout({

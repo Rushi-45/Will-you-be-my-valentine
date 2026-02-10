@@ -13,6 +13,9 @@ Edit **`config/valentine.ts`**.
 | **site.title** | Browser tab title and SEO title |
 | **site.description** | Meta description for SEO |
 | **site.favicon** | Path to favicon image (e.g. `/my-icon.png`) |
+| **site.url** | Full site URL (e.g. `"https://yoursite.com"`) for canonical and Open Graph |
+| **site.ogImage** | Absolute or path to share image (e.g. `"/og.png"` or full URL) for social previews |
+| **site.keywords** | Array of SEO keywords (e.g. `["valentine", "proposal"]`) |
 | **senderName** | Your name — used in the success message and “With love, …” |
 | **eyebrow** | Short line under the headline (e.g. `"February 14 · Just Us"`) |
 | **headline.line1** | First line of the main question (e.g. `"Will you be"`) |
@@ -25,6 +28,7 @@ Edit **`config/valentine.ts`**.
 | **images.cornerCat** | Image path for the top-right cat (question + success) |
 | **images.cryingCat** | GIF shown when the user clicks “No” |
 | **images.huggingCat** | GIF shown when the user clicks “Yes” |
+| **backgroundMusic** | Path to MP3 (e.g. `"/music.mp3"`) or `null` to hide the music toggle |
 
 ## 3. Images
 
