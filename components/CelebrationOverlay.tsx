@@ -139,7 +139,7 @@ function FloatingCat({
   delay: number;
   driftY: number;
   driftX: number;
-  rotate: [number, number, number];
+  rotate: number[];
 }) {
   return (
     <motion.div

@@ -26,7 +26,7 @@ export const metadata: Metadata = {
   metadataBase: siteUrl ? new URL(siteUrl) : undefined,
   title: valentineConfig.site.title,
   description: valentineConfig.site.description,
-  keywords: valentineConfig.site.keywords,
+  keywords: [...valentineConfig.site.keywords],
   robots: {
     index: true,
     follow: true,
