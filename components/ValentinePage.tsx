@@ -370,7 +370,10 @@ export function ValentinePage() {
                 className="mt-2 flex items-center justify-center gap-1.5 text-[0.8125rem] font-medium italic text-stone-500 sm:text-sm"
               >
                 <span>Made specially for someone who matters</span>
-                <Heart className="h-3.5 w-3.5 fill-rose-400/60 text-rose-400/60" aria-hidden />
+                <Heart
+                  className="h-3.5 w-3.5 fill-rose-400/60 text-rose-400/60"
+                  aria-hidden
+                />
               </motion.p>
 
               <AnimatePresence>
@@ -382,12 +385,13 @@ export function ValentinePage() {
                     transition={{ type: "spring", stiffness: 280, damping: 22 }}
                     className="flex justify-center"
                   >
-                    <img
+                    <Image
                       src={valentineConfig.images.cryingCat}
                       alt=""
-                      className="h-20 w-20 object-cover sm:h-24 sm:w-24"
                       width={96}
                       height={96}
+                      className="h-20 w-20 object-cover sm:h-24 sm:w-24"
+                      unoptimized
                     />
                   </motion.div>
                 )}
@@ -474,7 +478,6 @@ export function ValentinePage() {
                   </motion.button>
                 </motion.div>
               </motion.div>
-
             </div>
           </motion.section>
         )}
@@ -528,12 +531,13 @@ export function ValentinePage() {
                 }}
                 className="flex justify-center"
               >
-                <img
+                <Image
                   src={valentineConfig.images.huggingCat}
                   alt=""
-                  className="h-36 w-36 object-cover sm:h-44 sm:w-44"
                   width={176}
                   height={176}
+                  className="h-36 w-36 object-cover sm:h-44 sm:w-44"
+                  unoptimized
                 />
               </motion.div>
 
@@ -619,7 +623,6 @@ export function ValentinePage() {
                   </motion.button>
                 </div>
               </motion.div>
-
             </div>
           </motion.section>
         )}
@@ -641,9 +644,15 @@ export function ValentinePage() {
             rel="noopener noreferrer"
             className="group relative inline-flex min-h-[40px] touch-manipulation items-center justify-center gap-1.5 overflow-hidden rounded-full border border-rose-200/60 bg-linear-to-r from-rose-500 via-pink-500 to-rose-600 px-4 py-2 text-[0.8125rem] font-semibold text-white shadow-[0_2px_8px_-2px_rgba(190,18,60,0.25)] transition-all duration-200 hover:scale-105 hover:border-rose-300/80 hover:shadow-[0_4px_12px_-2px_rgba(190,18,60,0.35)] hover:brightness-105 active:scale-[0.98] sm:min-h-[42px] sm:px-5 sm:py-2.5 sm:text-sm"
           >
-            <Instagram className="h-4 w-4 shrink-0 transition-transform group-hover:scale-110 sm:h-[18px] sm:w-[18px]" aria-hidden />
+            <Instagram
+              className="h-4 w-4 shrink-0 transition-transform group-hover:scale-110 sm:h-[18px] sm:w-[18px]"
+              aria-hidden
+            />
             <span className="whitespace-nowrap">DM me on Instagram</span>
-            <Heart className="h-3.5 w-3.5 shrink-0 fill-current transition-transform group-hover:scale-110 sm:h-4 sm:w-4" aria-hidden />
+            <Heart
+              className="h-3.5 w-3.5 shrink-0 fill-current transition-transform group-hover:scale-110 sm:h-4 sm:w-4"
+              aria-hidden
+            />
           </a>
         </div>
       </motion.footer>

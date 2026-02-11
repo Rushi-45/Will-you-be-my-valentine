@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { memo } from "react";
 import { motion } from "framer-motion";
 
@@ -116,8 +117,6 @@ const FLOAT_CATS = [
   },
 ];
 
-type ImageKey = "cornerCat" | "huggingCat";
-
 function FloatingCat({
   src,
   alt,
@@ -184,13 +183,13 @@ function FloatingCat({
         },
       }}
     >
-      <img
+      <Image
         src={src}
         alt={alt}
         width={size}
         height={size}
         className="h-full w-full object-contain drop-shadow-lg"
-        draggable={false}
+        unoptimized
       />
     </motion.div>
   );
