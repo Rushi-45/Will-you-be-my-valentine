@@ -270,7 +270,7 @@ export function ValentinePage() {
   }, [noClickCount]);
 
   return (
-    <div className="relative flex min-h-screen flex-col items-center overflow-hidden bg-pink-50/90 pt-[max(1rem,env(safe-area-inset-top))] pb-[max(5rem,calc(1.5rem+env(safe-area-inset-bottom)))] pl-[max(1rem,env(safe-area-inset-left))] pr-[max(1rem,env(safe-area-inset-right))] text-stone-800 sm:px-5 sm:pb-[max(5.5rem,calc(1.5rem+env(safe-area-inset-bottom)))]">
+    <div className="relative flex min-h-screen flex-col items-center overflow-hidden bg-pink-50/90 pt-[max(3rem,calc(1rem+env(safe-area-inset-top)))] pb-[max(5rem,calc(1.5rem+env(safe-area-inset-bottom)))] pl-[max(1rem,env(safe-area-inset-left))] pr-[max(1rem,env(safe-area-inset-right))] text-stone-800 sm:px-5 sm:pt-[max(4rem,calc(1rem+env(safe-area-inset-top)))] sm:pb-[max(5.5rem,calc(1.5rem+env(safe-area-inset-bottom)))]">
       {showMusicToggle && (
         <MusicToggle musicOn={musicOn} onToggle={toggleMusic} />
       )}
@@ -301,7 +301,7 @@ export function ValentinePage() {
               duration: MOTION.duration.entrance,
               ease: MOTION.ease,
             }}
-            className="relative mt-4 w-full max-w-xl overflow-hidden rounded-2xl border border-pink-200/80 bg-white px-5 py-5 shadow-[0_4px_24px_-4px_rgba(190,18,60,0.12),0_0_1px_0_rgba(0,0,0,0.04)] sm:mt-0 sm:rounded-3xl sm:px-8 sm:py-8 md:p-10"
+            className="relative w-full max-w-xl overflow-hidden rounded-2xl border border-pink-200/80 bg-white px-5 py-5 shadow-[0_4px_24px_-4px_rgba(190,18,60,0.12),0_0_1px_0_rgba(0,0,0,0.04)] sm:rounded-3xl sm:px-8 sm:py-8 md:p-10"
           >
             <div className="pointer-events-none absolute inset-0">
               <div className="absolute -left-24 -top-24 h-64 w-64 rounded-full bg-rose-100/60 blur-3xl" />
@@ -493,7 +493,7 @@ export function ValentinePage() {
               delay: 1.1,
               ease: MOTION.ease,
             }}
-            className="relative z-40 mt-5 w-full max-w-xl overflow-hidden rounded-2xl border border-pink-200/80 bg-white p-5 text-center shadow-[0_4px_24px_-4px_rgba(190,18,60,0.12),0_0_1px_0_rgba(0,0,0,0.04)] sm:mt-0 sm:rounded-3xl sm:p-8 md:p-10"
+            className="relative z-40 w-full max-w-xl overflow-hidden rounded-2xl border border-pink-200/80 bg-white p-5 text-center shadow-[0_4px_24px_-4px_rgba(190,18,60,0.12),0_0_1px_0_rgba(0,0,0,0.04)] sm:rounded-3xl sm:p-8 md:p-10"
           >
             <div className="pointer-events-none absolute inset-0">
               <div className="absolute inset-x-12 top-0 h-44 bg-linear-to-b from-rose-50/70 via-pink-50/40 to-transparent blur-3xl" />
