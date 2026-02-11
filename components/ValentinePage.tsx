@@ -4,6 +4,16 @@ import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import { useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
+import {
+  Check,
+  Frown,
+  Heart,
+  Instagram,
+  Link2,
+  MessageCircle,
+  Volume2,
+  VolumeX,
+} from "lucide-react";
 import { valentineConfig, replaceSenderName } from "@/config/valentine";
 import { CelebrationOverlay } from "@/components/CelebrationOverlay";
 import { FloatingHearts } from "@/components/FloatingHearts";
@@ -25,9 +35,11 @@ const MusicToggle = memo(function MusicToggle({
       aria-label={musicOn ? "Mute background music" : "Play background music"}
       className="fixed bottom-5 right-5 z-50 flex h-12 min-h-[48px] w-12 min-w-[48px] items-center justify-center rounded-full border border-pink-200/80 bg-white/90 shadow-[0_4px_16px_-4px_rgba(190,18,60,0.15)] backdrop-blur-sm transition-colors hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-400/60 focus-visible:ring-offset-2 focus-visible:ring-offset-pink-50 active:scale-95 sm:bottom-6 sm:right-6 sm:h-11 sm:min-h-0 sm:min-w-0 sm:w-11"
     >
-      <span className="text-xl" aria-hidden="true">
-        {musicOn ? "🔊" : "🔇"}
-      </span>
+      {musicOn ? (
+        <Volume2 className="h-5 w-5" aria-hidden />
+      ) : (
+        <VolumeX className="h-5 w-5" aria-hidden />
+      )}
     </motion.button>
   );
 });
@@ -97,9 +109,15 @@ export function ValentinePage() {
   const [isAccepted, setIsAccepted] = useState(false);
   const [isConfettiRunning, setIsConfettiRunning] = useState(false);
   const [musicOn, setMusicOn] = useState(false);
+  const [shareUrl, setShareUrl] = useState("");
+  const [copied, setCopied] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const noMovedAtRef = useRef<number>(0);
   const musicSrc = valentineConfig.backgroundMusic ?? null;
+
+  useEffect(() => {
+    if (typeof window !== "undefined") setShareUrl(window.location.href);
+  }, []);
 
   const headlineLine1 = useMemo(
     () =>
@@ -224,6 +242,20 @@ export function ValentinePage() {
 
   const showMusicToggle = Boolean(musicSrc);
 
+  const handleCopyLink = useCallback(() => {
+    if (!shareUrl) return;
+    navigator.clipboard.writeText(shareUrl).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  }, [shareUrl]);
+
+  const whatsAppShareUrl = useMemo(() => {
+    if (!shareUrl) return "#";
+    const text = `They said yes! ${shareUrl}`;
+    return `https://wa.me/?text=${encodeURIComponent(text)}`;
+  }, [shareUrl]);
+
   const yesCursorClasses = useMemo(
     () => CURSOR_CLASSES[isConfettiRunning ? "loading" : "interactive"],
     [isConfettiRunning],
@@ -238,7 +270,7 @@ export function ValentinePage() {
   }, [noClickCount]);
 
   return (
-    <div className="relative flex min-h-screen flex-col items-center overflow-hidden bg-pink-50/90 pt-[max(1rem,env(safe-area-inset-top))] pb-[max(1.5rem,env(safe-area-inset-bottom))] pl-[max(1rem,env(safe-area-inset-left))] pr-[max(1rem,env(safe-area-inset-right))] text-stone-800 sm:justify-center sm:py-16 sm:px-5">
+    <div className="relative flex min-h-screen flex-col items-center overflow-hidden bg-pink-50/90 pt-[max(1rem,env(safe-area-inset-top))] pb-[max(5rem,calc(1.5rem+env(safe-area-inset-bottom)))] pl-[max(1rem,env(safe-area-inset-left))] pr-[max(1rem,env(safe-area-inset-right))] text-stone-800 sm:px-5 sm:pb-[max(5.5rem,calc(1.5rem+env(safe-area-inset-bottom)))]">
       {showMusicToggle && (
         <MusicToggle musicOn={musicOn} onToggle={toggleMusic} />
       )}
@@ -269,7 +301,7 @@ export function ValentinePage() {
               duration: MOTION.duration.entrance,
               ease: MOTION.ease,
             }}
-            className="relative mt-4 w-full max-w-xl overflow-hidden rounded-2xl border border-pink-200/80 bg-white px-5 py-6 shadow-[0_4px_24px_-4px_rgba(190,18,60,0.12),0_0_1px_0_rgba(0,0,0,0.04)] sm:mt-0 sm:rounded-3xl sm:px-10 sm:py-10 md:p-12"
+            className="relative mt-4 w-full max-w-xl overflow-hidden rounded-2xl border border-pink-200/80 bg-white px-5 py-5 shadow-[0_4px_24px_-4px_rgba(190,18,60,0.12),0_0_1px_0_rgba(0,0,0,0.04)] sm:mt-0 sm:rounded-3xl sm:px-8 sm:py-8 md:p-10"
           >
             <div className="pointer-events-none absolute inset-0">
               <div className="absolute -left-24 -top-24 h-64 w-64 rounded-full bg-rose-100/60 blur-3xl" />
@@ -297,7 +329,7 @@ export function ValentinePage() {
               />
             </motion.div>
 
-            <div className="relative z-10 flex flex-col items-center gap-8 text-center sm:gap-10">
+            <div className="relative z-10 flex flex-col items-center gap-6 text-center sm:gap-7">
               <motion.p
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -326,6 +358,20 @@ export function ValentinePage() {
                   {valentineConfig.headline.line2}
                 </span>
               </motion.h1>
+
+              <motion.p
+                initial={{ opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{
+                  duration: MOTION.duration.normal,
+                  delay: MOTION.stagger * 2.5,
+                  ease: MOTION.easeOut,
+                }}
+                className="mt-2 flex items-center justify-center gap-1.5 text-[0.8125rem] font-medium italic text-stone-500 sm:text-sm"
+              >
+                <span>Made specially for someone who matters</span>
+                <Heart className="h-3.5 w-3.5 fill-rose-400/60 text-rose-400/60" aria-hidden />
+              </motion.p>
 
               <AnimatePresence>
                 {noClickCount > 0 && (
@@ -368,7 +414,7 @@ export function ValentinePage() {
                   delay: MOTION.stagger * 4,
                   ease: MOTION.easeOut,
                 }}
-                className="mt-1 flex w-full flex-col items-center justify-center gap-5 sm:flex-row sm:gap-5"
+                className="mt-1 flex w-full flex-col items-center justify-center gap-4 sm:flex-row sm:gap-4"
               >
                 <motion.button
                   type="button"
@@ -388,16 +434,14 @@ export function ValentinePage() {
                   transition={{ type: "spring", stiffness: 280, damping: 20 }}
                   onClick={handleYesClick}
                   disabled={isConfettiRunning}
-                  className={`inline-flex min-h-[48px] min-w-[140px] shrink-0 touch-manipulation items-center justify-center rounded-full bg-linear-to-r from-rose-500 via-pink-500 to-rose-600 px-8 py-4 text-[0.9375rem] font-semibold text-white shadow-[0_4px_14px_-2px_rgba(190,18,60,0.35)] transition-shadow duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-400/60 focus-visible:ring-offset-2 focus-visible:ring-offset-white active:scale-[0.98] sm:min-h-0 sm:min-w-0 sm:py-3.5 ${yesCursorClasses}`}
+                  className={`inline-flex min-h-[48px] min-w-[140px] shrink-0 touch-manipulation items-center justify-center rounded-full bg-linear-to-r from-rose-500 via-pink-500 to-rose-600 px-8 py-4 text-[0.9375rem] font-semibold text-white shadow-[0_4px_14px_-2px_rgba(190,18,60,0.35)] transition-shadow duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-400/60 focus-visible:ring-offset-2 focus-visible:ring-offset-white active:scale-[0.98] sm:min-h-[48px] sm:min-w-[160px] sm:px-10 sm:py-3.5 ${yesCursorClasses}`}
                 >
                   <span className="mr-1.5">Yes</span>
-                  <span aria-hidden="true" className="text-lg">
-                    💕
-                  </span>
+                  <Heart className="h-5 w-5 fill-current" aria-hidden />
                 </motion.button>
 
                 <motion.div
-                  className="relative min-h-[48px] w-full min-w-0 sm:h-auto sm:w-auto origin-center"
+                  className="relative min-h-[48px] w-[140px] shrink-0 sm:h-auto sm:w-auto origin-center"
                   animate={{
                     x: noOffsets.x,
                     y: noOffsets.y,
@@ -421,32 +465,16 @@ export function ValentinePage() {
                         "0 4px 12px -2px rgba(0,0,0,0.08), 0 0 0 1px rgba(255,255,255,0.6) inset",
                     }}
                     whileTap={{ scale: 0.98, y: 0 }}
-                    className={`inline-flex h-12 min-h-[48px] w-full min-w-[48px] touch-manipulation items-center justify-center rounded-full border border-pink-200 bg-pink-50/80 px-6 py-3.5 text-[0.875rem] font-medium text-stone-600 shadow-sm transition-shadow duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-400/50 focus-visible:ring-offset-2 focus-visible:ring-offset-white active:scale-[0.98] sm:h-11 sm:min-h-0 sm:min-w-0 sm:w-auto sm:px-5 ${noCursorClasses}`}
+                    className={`inline-flex h-12 min-h-[48px] w-full touch-manipulation items-center justify-center rounded-full border border-pink-200 bg-pink-50/80 px-6 py-3.5 text-[0.875rem] font-medium text-stone-600 shadow-sm transition-shadow duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-400/50 focus-visible:ring-offset-2 focus-visible:ring-offset-white active:scale-[0.98] sm:h-12 sm:min-h-[48px] sm:w-auto sm:px-8 ${noCursorClasses}`}
                   >
                     <span className="mr-1.5">
                       {noClickCount === 0 ? "No" : noButtonLabel}
                     </span>
-                    <span aria-hidden="true" className="text-base">
-                      😢
-                    </span>
+                    <Frown className="h-4 w-4" aria-hidden />
                   </motion.button>
                 </motion.div>
               </motion.div>
 
-              <motion.a
-                href="https://wa.me/917016552650?text=Hi%2C%20I'd%20like%20to%20create%20my%20own%20custom%20Valentine%20page"
-                target="_blank"
-                rel="noopener noreferrer"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{
-                  duration: MOTION.duration.normal,
-                  delay: MOTION.stagger * 5,
-                }}
-                className="mt-6 inline-flex min-h-[44px] flex-wrap items-center justify-center gap-1.5 py-2 text-[0.8125rem] font-medium text-rose-600 underline decoration-rose-200 underline-offset-2 transition-colors hover:text-rose-700 hover:decoration-rose-400 cursor-pointer sm:mt-8 sm:text-sm"
-              >
-                Create Your Own Custom Valentine Page →
-              </motion.a>
             </div>
           </motion.section>
         )}
@@ -462,7 +490,7 @@ export function ValentinePage() {
               delay: 1.1,
               ease: MOTION.ease,
             }}
-            className="relative z-40 mt-5 w-full max-w-xl overflow-hidden rounded-2xl border border-pink-200/80 bg-white p-6 text-center shadow-[0_4px_24px_-4px_rgba(190,18,60,0.12),0_0_1px_0_rgba(0,0,0,0.04)] sm:mt-0 sm:rounded-3xl sm:p-10 md:p-12"
+            className="relative z-40 mt-5 w-full max-w-xl overflow-hidden rounded-2xl border border-pink-200/80 bg-white p-5 text-center shadow-[0_4px_24px_-4px_rgba(190,18,60,0.12),0_0_1px_0_rgba(0,0,0,0.04)] sm:mt-0 sm:rounded-3xl sm:p-8 md:p-10"
           >
             <div className="pointer-events-none absolute inset-0">
               <div className="absolute inset-x-12 top-0 h-44 bg-linear-to-b from-rose-50/70 via-pink-50/40 to-transparent blur-3xl" />
@@ -488,7 +516,7 @@ export function ValentinePage() {
               />
             </motion.div>
 
-            <div className="relative z-10 flex flex-col items-center gap-6 sm:gap-8">
+            <div className="relative z-10 flex flex-col items-center gap-3 sm:gap-4">
               <motion.div
                 initial={{ scale: 0, rotate: -12 }}
                 animate={{ scale: 1, rotate: 0 }}
@@ -550,24 +578,75 @@ export function ValentinePage() {
                 )}
               </motion.p>
 
-              <motion.a
-                href="https://wa.me/917016552650?text=Hi%2C%20I'd%20like%20to%20create%20my%20own%20custom%20Valentine%20page"
-                target="_blank"
-                rel="noopener noreferrer"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
+              <motion.div
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
                 transition={{
                   duration: MOTION.duration.normal,
                   delay: MOTION.stagger * 5,
+                  ease: MOTION.easeOut,
                 }}
-                className="mt-6 inline-flex min-h-[44px] flex-wrap items-center justify-center gap-1.5 py-2 text-[0.8125rem] font-medium text-rose-600 underline decoration-rose-200 underline-offset-2 transition-colors hover:text-rose-700 hover:decoration-rose-400 cursor-pointer sm:mt-8 sm:text-sm"
+                className="mt-3 w-full sm:mt-4"
               >
-                Create Your Own Custom Valentine Page →
-              </motion.a>
+                <p className="mb-2 text-[0.75rem] font-semibold uppercase tracking-wider text-stone-500 sm:text-[0.8125rem]">
+                  Share the love
+                </p>
+                <div className="flex flex-col gap-3 sm:flex-row sm:justify-center sm:gap-4">
+                  <a
+                    href={whatsAppShareUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label="Share on WhatsApp"
+                    className="inline-flex min-h-[48px] shrink-0 touch-manipulation items-center justify-center gap-2 rounded-xl border border-green-200 bg-[#25D366]/10 px-5 py-3 text-[0.9375rem] font-semibold text-[#128C7E] transition-colors hover:bg-[#25D366]/20 active:scale-[0.98] sm:px-6"
+                  >
+                    <MessageCircle className="h-5 w-5 shrink-0" aria-hidden />
+                    <span>Share on WhatsApp</span>
+                  </a>
+                  <motion.button
+                    type="button"
+                    onClick={handleCopyLink}
+                    disabled={!shareUrl}
+                    aria-label={copied ? "Link copied" : "Copy link"}
+                    whileTap={{ scale: 0.98 }}
+                    className="inline-flex min-h-[48px] shrink-0 touch-manipulation items-center justify-center gap-2 rounded-xl border border-pink-200 bg-pink-50/80 px-5 py-3 text-[0.9375rem] font-semibold text-rose-700 transition-colors hover:bg-pink-100 active:scale-[0.98] disabled:opacity-60 sm:px-6"
+                  >
+                    {copied ? (
+                      <Check className="h-5 w-5 shrink-0" aria-hidden />
+                    ) : (
+                      <Link2 className="h-5 w-5 shrink-0" aria-hidden />
+                    )}
+                    <span>{copied ? "Copied!" : "Copy link"}</span>
+                  </motion.button>
+                </div>
+              </motion.div>
+
             </div>
           </motion.section>
         )}
       </AnimatePresence>
+
+      <motion.footer
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.4, delay: 0.5 }}
+        className="fixed bottom-0 left-0 right-0 z-30 w-full border-t border-pink-100/50 bg-white/80 py-2.5 backdrop-blur-sm sm:py-3"
+      >
+        <div className="mx-auto flex max-w-xl flex-col items-center justify-center gap-1.5 px-4 text-center sm:flex-row sm:gap-2 sm:px-5">
+          <p className="text-[0.75rem] text-stone-600 sm:text-[0.8125rem]">
+            Want one like this?
+          </p>
+          <a
+            href="https://www.instagram.com/rushiii.js"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="group relative inline-flex min-h-[40px] touch-manipulation items-center justify-center gap-1.5 overflow-hidden rounded-full border border-rose-200/60 bg-linear-to-r from-rose-500 via-pink-500 to-rose-600 px-4 py-2 text-[0.8125rem] font-semibold text-white shadow-[0_2px_8px_-2px_rgba(190,18,60,0.25)] transition-all duration-200 hover:scale-105 hover:border-rose-300/80 hover:shadow-[0_4px_12px_-2px_rgba(190,18,60,0.35)] hover:brightness-105 active:scale-[0.98] sm:min-h-[42px] sm:px-5 sm:py-2.5 sm:text-sm"
+          >
+            <Instagram className="h-4 w-4 shrink-0 transition-transform group-hover:scale-110 sm:h-[18px] sm:w-[18px]" aria-hidden />
+            <span className="whitespace-nowrap">DM me on Instagram</span>
+            <Heart className="h-3.5 w-3.5 shrink-0 fill-current transition-transform group-hover:scale-110 sm:h-4 sm:w-4" aria-hidden />
+          </a>
+        </div>
+      </motion.footer>
     </div>
   );
 }

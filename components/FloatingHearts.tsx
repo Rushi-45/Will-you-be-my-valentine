@@ -1,9 +1,8 @@
 "use client";
 
+import { Heart } from "lucide-react";
 import { memo } from "react";
 import { motion } from "framer-motion";
-
-const HEARTS = ["💕", "💖", "💗", "❤️", "💝"] as const;
 
 const FLOAT_CONFIG = [
   {
@@ -13,7 +12,7 @@ const FLOAT_CONFIG = [
     duration: 9,
     driftY: 20,
     driftX: 6,
-    size: "text-xl",
+    size: "h-5 w-5",
     opacity: 0.18,
   },
   {
@@ -23,7 +22,7 @@ const FLOAT_CONFIG = [
     duration: 8.5,
     driftY: -18,
     driftX: -5,
-    size: "text-lg",
+    size: "h-4 w-4",
     opacity: 0.2,
   },
   {
@@ -33,7 +32,7 @@ const FLOAT_CONFIG = [
     duration: 9.5,
     driftY: -16,
     driftX: 8,
-    size: "text-2xl",
+    size: "h-6 w-6",
     opacity: 0.16,
   },
   {
@@ -43,7 +42,7 @@ const FLOAT_CONFIG = [
     duration: 8,
     driftY: 18,
     driftX: -6,
-    size: "text-lg",
+    size: "h-4 w-4",
     opacity: 0.2,
   },
   {
@@ -53,7 +52,7 @@ const FLOAT_CONFIG = [
     duration: 9.2,
     driftY: 14,
     driftX: 10,
-    size: "text-xl",
+    size: "h-5 w-5",
     opacity: 0.14,
   },
   {
@@ -63,7 +62,7 @@ const FLOAT_CONFIG = [
     duration: 8.8,
     driftY: -20,
     driftX: -8,
-    size: "text-lg",
+    size: "h-4 w-4",
     opacity: 0.18,
   },
   {
@@ -73,7 +72,7 @@ const FLOAT_CONFIG = [
     duration: 8.2,
     driftY: 16,
     driftX: 5,
-    size: "text-xl",
+    size: "h-5 w-5",
     opacity: 0.17,
   },
   {
@@ -83,7 +82,7 @@ const FLOAT_CONFIG = [
     duration: 9,
     driftY: -14,
     driftX: -7,
-    size: "text-lg",
+    size: "h-4 w-4",
     opacity: 0.19,
   },
   {
@@ -93,7 +92,7 @@ const FLOAT_CONFIG = [
     duration: 8.6,
     driftY: 18,
     driftX: -6,
-    size: "text-2xl",
+    size: "h-6 w-6",
     opacity: 0.15,
   },
   {
@@ -103,7 +102,7 @@ const FLOAT_CONFIG = [
     duration: 8.4,
     driftY: -18,
     driftX: 8,
-    size: "text-lg",
+    size: "h-4 w-4",
     opacity: 0.18,
   },
   {
@@ -113,7 +112,7 @@ const FLOAT_CONFIG = [
     duration: 9.4,
     driftY: 14,
     driftX: -5,
-    size: "text-xl",
+    size: "h-5 w-5",
     opacity: 0.16,
   },
   {
@@ -123,7 +122,7 @@ const FLOAT_CONFIG = [
     duration: 8.2,
     driftY: -16,
     driftX: 6,
-    size: "text-lg",
+    size: "h-4 w-4",
     opacity: 0.14,
   },
 ];
@@ -135,9 +134,9 @@ function FloatingHeartsComponent() {
       aria-hidden
     >
       {FLOAT_CONFIG.map((config, i) => (
-        <motion.span
+        <motion.div
           key={i}
-          className={`absolute select-none text-rose-300 ${config.size}`}
+          className="absolute select-none"
           style={{
             left: config.x,
             top: config.y,
@@ -156,8 +155,11 @@ function FloatingHeartsComponent() {
             ease: [0.45, 0, 0.55, 1],
           }}
         >
-          {HEARTS[i % HEARTS.length]}
-        </motion.span>
+          <Heart
+            className={`${config.size} text-rose-300 fill-rose-300/30`}
+            aria-hidden
+          />
+        </motion.div>
       ))}
     </div>
   );
