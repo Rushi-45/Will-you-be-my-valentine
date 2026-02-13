@@ -77,6 +77,14 @@ const CURSOR_CLASSES: Record<CursorVariant, string> = {
 
 const NO_MESSAGES = valentineConfig.noButtonMessages;
 
+const SAD_MESSAGES = [
+  "Made for someone who might break my heart",
+  "Hoping you'll change your mind",
+  "Please don't say no again",
+  "My heart can't take another no",
+  "This is getting really sad",
+] as const;
+
 const MOTION = {
   ease: [0.16, 1, 0.3, 1] as const,
   easeOut: [0.4, 0, 0.2, 1] as const,
@@ -87,6 +95,12 @@ const MOTION = {
 function getNoButtonLabel(clickCount: number): string {
   const index = Math.min(clickCount, NO_MESSAGES.length - 1);
   return NO_MESSAGES[index];
+}
+
+function getSadMessage(clickCount: number): string {
+  if (clickCount === 0) return "";
+  const index = Math.min(clickCount - 1, SAD_MESSAGES.length - 1);
+  return SAD_MESSAGES[index];
 }
 
 export function ValentinePage() {
@@ -138,6 +152,8 @@ export function ValentinePage() {
     () => getNoButtonLabel(noClickCount),
     [noClickCount],
   );
+
+  const sadMessage = useMemo(() => getSadMessage(noClickCount), [noClickCount]);
 
   const handleNoMove = useCallback(() => {
     const isNarrow = typeof window !== "undefined" && window.innerWidth < 640;
@@ -360,62 +376,86 @@ export function ValentinePage() {
               </motion.h1>
 
               <motion.p
+                key={noClickCount}
                 initial={{ opacity: 0, y: 6 }}
                 animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -6 }}
                 transition={{
                   duration: MOTION.duration.normal,
-                  delay: MOTION.stagger * 2.5,
+                  delay: noClickCount > 0 ? 0 : MOTION.stagger * 2.5,
                   ease: MOTION.easeOut,
                 }}
                 className="mt-2 flex items-center justify-center gap-1.5 text-[0.8125rem] font-medium italic text-stone-500 sm:text-sm"
               >
-                <span>Made specially for someone who matters</span>
-                <Heart
-                  className="h-3.5 w-3.5 fill-rose-400/60 text-rose-400/60"
-                  aria-hidden
-                />
-              </motion.p>
-
-              <AnimatePresence>
-                {noClickCount > 0 && (
-                  <motion.div
-                    initial={{ opacity: 0, scale: 0.88, y: 6 }}
-                    animate={{ opacity: 1, scale: 1, y: 0 }}
-                    exit={{ opacity: 0, scale: 0.92 }}
-                    transition={{ type: "spring", stiffness: 280, damping: 22 }}
-                    className="flex justify-center"
-                  >
-                    <Image
-                      src={valentineConfig.images.cryingCat}
-                      alt=""
-                      width={96}
-                      height={96}
-                      className="h-20 w-20 object-cover sm:h-24 sm:w-24"
-                      unoptimized
+                {noClickCount > 0 ? (
+                  <>
+                    <span>{sadMessage}</span>
+                    <Frown
+                      className="h-3.5 w-3.5 text-rose-400/60"
+                      aria-hidden
                     />
-                  </motion.div>
+                  </>
+                ) : (
+                  <>
+                    <span>Made specially for someone who matters</span>
+                    <Heart
+                      className="h-3.5 w-3.5 fill-rose-400/60 text-rose-400/60"
+                      aria-hidden
+                    />
+                  </>
                 )}
-              </AnimatePresence>
-
-              <motion.p
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{
-                  duration: MOTION.duration.normal,
-                  delay: MOTION.stagger * 3,
-                  ease: MOTION.easeOut,
-                }}
-                className="max-w-md text-balance text-[0.9375rem] leading-[1.6] text-stone-600 sm:text-base sm:leading-[1.65]"
-              >
-                {valentineConfig.promise}
               </motion.p>
+
+              <div className="mt-4 min-h-[120px] flex items-center justify-center sm:min-h-[140px]">
+                <AnimatePresence mode="wait">
+                  {noClickCount === 0 ? (
+                    <motion.p
+                      key="promise"
+                      initial={{ opacity: 0, y: 6 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -6 }}
+                      transition={{
+                        duration: MOTION.duration.normal,
+                        delay: MOTION.stagger * 3.5,
+                        ease: MOTION.easeOut,
+                      }}
+                      className="max-w-md text-center text-[0.875rem] leading-relaxed text-stone-600 sm:text-[0.9375rem]"
+                    >
+                      {valentineConfig.promise}
+                    </motion.p>
+                  ) : (
+                    <motion.div
+                      key="crying-cat"
+                      initial={{ opacity: 0, scale: 0.88, y: 6 }}
+                      animate={{ opacity: 1, scale: 1, y: 0 }}
+                      exit={{ opacity: 0, scale: 0.92 }}
+                      transition={{
+                        type: "spring",
+                        stiffness: 280,
+                        damping: 22,
+                        delay: 0.2,
+                      }}
+                      className="flex justify-center"
+                    >
+                      <Image
+                        src={valentineConfig.images.cryingCat}
+                        alt=""
+                        width={96}
+                        height={96}
+                        className="h-20 w-20 object-cover sm:h-24 sm:w-24"
+                        unoptimized
+                      />
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
 
               <motion.div
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{
                   duration: MOTION.duration.normal,
-                  delay: MOTION.stagger * 4,
+                  delay: MOTION.stagger * 3,
                   ease: MOTION.easeOut,
                 }}
                 className="mt-1 flex w-full flex-col items-center justify-center gap-4 sm:flex-row sm:gap-4"

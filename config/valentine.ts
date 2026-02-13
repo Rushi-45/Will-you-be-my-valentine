@@ -2,7 +2,7 @@ export const valentineConfig = {
   site: {
     title: "Will You Be My Valentine?",
     description: "A cute Valentine page.",
-    favicon: "/letter-C680mUtz.webp",
+    favicon: "/intro-DzUiguR4.webp",
     url: null as string | null,
     ogImage: null as string | null,
     keywords: [
