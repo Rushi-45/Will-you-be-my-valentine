@@ -6,7 +6,6 @@
   --surface: #ffffff;
   --primary: #be185d;
   --primary-soft: #fbcfe8;
-<<<<<<< HEAD
   --secondary: #78716c;
   --secondary-soft: #e7e5e4;
   --success: #059669;
@@ -15,8 +14,6 @@
   --danger-soft: #fee2e2;
   --warning: #d97706;
   --warning-soft: #fef3c7;
-=======
->>>>>>> e188e05b6affeb9b869d1aaf38723e2d239ecfa1
   --muted: #78716c;
   --border: #f9a8d4;
   --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
@@ -38,7 +35,6 @@
   --font-mono: var(--font-geist-mono);
 }
 
-<<<<<<< HEAD
 .dark {
   --background: #09060a;
   --foreground: #fafaf9;
@@ -66,12 +62,6 @@
     --primary-soft: #831843;
     --muted: #a8a29e;
     --border: #6b2c47;
-=======
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #09060a;
-    --foreground: #fafaf9;
->>>>>>> e188e05b6affeb9b869d1aaf38723e2d239ecfa1
   }
 }
 
