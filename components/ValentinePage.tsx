@@ -1,0 +1,705 @@
+"use client";
+
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import Image from "next/image";
+import { useSearchParams } from "next/navigation";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  Check,
+  Frown,
+  Heart,
+  Instagram,
+  Link2,
+  MessageCircle,
+  Volume2,
+  VolumeX,
+} from "lucide-react";
+import { valentineConfig, replaceSenderName } from "@/config/valentine";
+import { CelebrationOverlay } from "@/components/CelebrationOverlay";
+import { FloatingHearts } from "@/components/FloatingHearts";
+import { Avatar } from "@/components/Avatar";
+
+const MusicToggle = memo(function MusicToggle({
+  musicOn,
+  onToggle,
+}: {
+  musicOn: boolean;
+  onToggle: () => void;
+}) {
+  return (
+    <motion.button
+      type="button"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ delay: 1 }}
+      onClick={onToggle}
+      aria-label={musicOn ? "Mute background music" : "Play background music"}
+      className="fixed bottom-5 right-5 z-50 flex h-12 min-h-[48px] w-12 min-w-[48px] items-center justify-center rounded-full border border-pink-200/80 bg-white/90 shadow-[0_4px_16px_-4px_rgba(190,18,60,0.15)] backdrop-blur-sm transition-colors hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-400/60 focus-visible:ring-offset-2 focus-visible:ring-offset-pink-50 active:scale-95 sm:bottom-6 sm:right-6 sm:h-11 sm:min-h-0 sm:min-w-0 sm:w-11"
+    >
+      {musicOn ? (
+        <Volume2 className="h-5 w-5" aria-hidden />
+      ) : (
+        <VolumeX className="h-5 w-5" aria-hidden />
+      )}
+    </motion.button>
+  );
+});
+
+function getRecipientName(
+  searchParams: ReturnType<typeof useSearchParams>,
+): string | null {
+  const name = searchParams.get("name");
+  if (!name || typeof name !== "string") return null;
+  const trimmed = name.trim();
+  return trimmed.length > 0 ? trimmed : null;
+}
+
+function getSenderName(
+  searchParams: ReturnType<typeof useSearchParams>,
+): string | null {
+  const sender = searchParams.get("sender");
+  if (!sender || typeof sender !== "string") return null;
+  const trimmed = sender.trim();
+  return trimmed.length > 0 ? trimmed : null;
+}
+
+function capitalizeName(name: string): string {
+  return name.charAt(0).toUpperCase() + name.slice(1).toLowerCase();
+}
+
+type CursorVariant = "default" | "interactive" | "disabled" | "loading";
+
+const CURSOR_CLASSES: Record<CursorVariant, string> = {
+  default: "cursor-default",
+  interactive: "cursor-pointer",
+  disabled: "cursor-not-allowed",
+  loading: "cursor-wait",
+};
+
+const NO_MESSAGES = valentineConfig.noButtonMessages;
+
+const SAD_MESSAGES = [
+  "Made for someone who might break my heart",
+  "Hoping you'll change your mind",
+  "Please don't say no again",
+  "My heart can't take another no",
+  "This is getting really sad",
+] as const;
+
+const MOTION = {
+  ease: [0.16, 1, 0.3, 1] as const,
+  easeOut: [0.4, 0, 0.2, 1] as const,
+  duration: { fast: 0.2, normal: 0.32, slow: 0.48, entrance: 0.52, exit: 0.4 },
+  stagger: 0.08,
+} as const;
+
+function getNoButtonLabel(clickCount: number): string {
+  const index = Math.min(clickCount, NO_MESSAGES.length - 1);
+  return NO_MESSAGES[index];
+}
+
+function getSadMessage(clickCount: number): string {
+  if (clickCount === 0) return "";
+  const index = Math.min(clickCount - 1, SAD_MESSAGES.length - 1);
+  return SAD_MESSAGES[index];
+}
+
+export function ValentinePage() {
+  const searchParams = useSearchParams();
+  const recipientName = useMemo(() => {
+    const raw = getRecipientName(searchParams);
+    return raw ? capitalizeName(raw) : null;
+  }, [searchParams]);
+
+  const senderName = useMemo(() => {
+    const fromUrl = getSenderName(searchParams);
+    const name = fromUrl ? capitalizeName(fromUrl) : valentineConfig.senderName;
+    return name.trim() || valentineConfig.senderName;
+  }, [searchParams]);
+
+  const [noClickCount, setNoClickCount] = useState(0);
+  const [noOffsets, setNoOffsets] = useState({ x: 0, y: 0 });
+  const [yesScale, setYesScale] = useState(1);
+  const [noScale, setNoScale] = useState(1);
+  const [isAccepted, setIsAccepted] = useState(false);
+  const [isConfettiRunning, setIsConfettiRunning] = useState(false);
+  const [musicOn, setMusicOn] = useState(false);
+  const [shareUrl, setShareUrl] = useState("");
+  const [copied, setCopied] = useState(false);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const noMovedAtRef = useRef<number>(0);
+  const musicSrc = valentineConfig.backgroundMusic ?? null;
+
+  useEffect(() => {
+    if (typeof window !== "undefined") setShareUrl(window.location.href);
+  }, []);
+
+  const headlineLine1 = useMemo(
+    () =>
+      recipientName
+        ? `${recipientName}, will you be`
+        : valentineConfig.headline.line1,
+    [recipientName],
+  );
+  const successHeadline = useMemo(
+    () =>
+      recipientName
+        ? `You said yes, ${recipientName}!`
+        : valentineConfig.success.headline,
+    [recipientName],
+  );
+
+  const noButtonLabel = useMemo(
+    () => getNoButtonLabel(noClickCount),
+    [noClickCount],
+  );
+
+  const sadMessage = useMemo(() => getSadMessage(noClickCount), [noClickCount]);
+
+  const handleNoMove = useCallback(() => {
+    const isNarrow = typeof window !== "undefined" && window.innerWidth < 640;
+    const rangeX = isNarrow ? 180 : 140;
+    const rangeY = isNarrow ? 100 : 80;
+    const randomX = (Math.random() - 0.5) * rangeX;
+    const randomY = (Math.random() - 0.5) * rangeY;
+    setNoOffsets({ x: randomX, y: randomY });
+    noMovedAtRef.current = Date.now();
+  }, []);
+
+  const handleNoTouchStart = useCallback(() => {
+    handleNoMove();
+  }, [handleNoMove]);
+
+  const handleNoClick = useCallback(() => {
+    const movedRecently = Date.now() - noMovedAtRef.current < 400;
+    if (movedRecently) return;
+    setNoClickCount((previous) => previous + 1);
+    setYesScale((previous) => Math.min(previous + 0.2, 3));
+    setNoScale((previous) => Math.max(previous - 0.08, 0.5));
+  }, []);
+
+  const triggerConfetti = useCallback(async () => {
+    setIsConfettiRunning(true);
+
+    const { default: confetti } = await import("canvas-confetti");
+
+    const duration = 1000;
+    const animationEnd = Date.now() + duration;
+
+    const randomInRange = (min: number, max: number) =>
+      Math.random() * (max - min) + min;
+
+    let frameCount = 0;
+
+    const frame = () => {
+      const timeLeft = animationEnd - Date.now();
+
+      if (timeLeft <= 0) {
+        setIsConfettiRunning(false);
+        return;
+      }
+
+      const particleCount = 18 * (timeLeft / duration);
+
+      if (frameCount % 3 === 0) {
+        confetti({
+          particleCount,
+          spread: 80,
+          origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 },
+        });
+        confetti({
+          particleCount,
+          spread: 80,
+          origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 },
+        });
+      }
+      frameCount += 1;
+
+      requestAnimationFrame(frame);
+    };
+
+    frame();
+  }, []);
+
+  const handleYesClick = useCallback(() => {
+    if (isConfettiRunning) return;
+
+    setIsAccepted(true);
+    triggerConfetti();
+  }, [isConfettiRunning, triggerConfetti]);
+
+  useEffect(() => {
+    if (isAccepted) {
+      setNoOffsets({ x: 0, y: 0 });
+      setNoScale(1);
+    }
+  }, [isAccepted]);
+
+  const toggleMusic = useCallback(() => {
+    if (!musicSrc) return;
+    if (musicOn) {
+      const audio = audioRef.current;
+      if (audio) {
+        audio.pause();
+        setMusicOn(false);
+      }
+    } else {
+      let audio = audioRef.current;
+      if (!audio) {
+        audio = new Audio(musicSrc);
+        audio.loop = true;
+        audioRef.current = audio;
+      }
+      audio
+        .play()
+        .then(() => setMusicOn(true))
+        .catch(() => setMusicOn(false));
+    }
+  }, [musicOn, musicSrc]);
+
+  const showMusicToggle = Boolean(musicSrc);
+
+  const handleCopyLink = useCallback(() => {
+    if (!shareUrl) return;
+    navigator.clipboard.writeText(shareUrl).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  }, [shareUrl]);
+
+  const whatsAppShareUrl = useMemo(() => {
+    if (!shareUrl) return "#";
+    const text = `They said yes! ${shareUrl}`;
+    return `https://wa.me/?text=${encodeURIComponent(text)}`;
+  }, [shareUrl]);
+
+  const yesCursorClasses = useMemo(
+    () => CURSOR_CLASSES[isConfettiRunning ? "loading" : "interactive"],
+    [isConfettiRunning],
+  );
+
+  const noCursorClasses = CURSOR_CLASSES.interactive;
+
+  const containerScale = useMemo(() => {
+    const extraClicks = Math.max(noClickCount - 5, 0);
+    const added = extraClicks * 0.12;
+    return Math.min(1 + added, 1.9);
+  }, [noClickCount]);
+
+  return (
+    <div className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden bg-pink-50/90 py-12 pl-[max(1rem,env(safe-area-inset-left))] pr-[max(1rem,env(safe-area-inset-right))] pb-20 text-stone-800 sm:px-5 sm:py-16 sm:pb-24 dark:bg-slate-950 dark:text-slate-100">
+      {showMusicToggle && (
+        <MusicToggle musicOn={musicOn} onToggle={toggleMusic} />
+      )}
+      <FloatingHearts />
+      {isAccepted && (
+        <CelebrationOverlay
+          cornerCatSrc={valentineConfig.images.cornerCat}
+          huggingCatSrc={valentineConfig.images.huggingCat}
+        />
+      )}
+      <AnimatePresence mode="wait">
+        {!isAccepted && (
+          <motion.section
+            key="valentine-question"
+            initial={{ opacity: 0, y: 32, scale: 0.96 }}
+            animate={{ opacity: 1, y: 0, scale: containerScale }}
+            exit={{
+              opacity: [1, 1, 0],
+              scale: [1, 1.04, 1.08],
+              y: [0, 0, -16],
+              transition: {
+                duration: MOTION.duration.exit,
+                times: [0, 0.4, 1],
+                ease: MOTION.easeOut,
+              },
+            }}
+            transition={{
+              duration: MOTION.duration.entrance,
+              ease: MOTION.ease,
+            }}
+            className="relative w-full max-w-xl overflow-hidden rounded-2xl border border-pink-200/80 bg-white px-5 py-5 shadow-[0_4px_24px_-4px_rgba(190,18,60,0.12),0_0_1px_0_rgba(0,0,0,0.04)] sm:rounded-3xl sm:px-8 sm:py-8 md:p-10"
+          >
+            <div className="pointer-events-none absolute inset-0">
+              <div className="absolute -left-24 -top-24 h-64 w-64 rounded-full bg-rose-100/60 blur-3xl" />
+              <div className="absolute -bottom-28 -right-28 h-72 w-72 rounded-full bg-pink-100/50 blur-3xl" />
+              <div className="absolute right-1/3 top-1/3 h-40 w-40 rounded-full bg-rose-50/50 blur-2xl" />
+            </div>
+
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{
+                delay: MOTION.stagger * 4,
+                duration: MOTION.duration.normal,
+                ease: MOTION.ease,
+              }}
+              className="absolute right-4 top-4 z-20 overflow-hidden rounded-xl border border-pink-200/70 shadow-md sm:right-5 sm:top-5"
+            >
+              <Image
+                src={valentineConfig.images.cornerCat}
+                alt=""
+                width={72}
+                height={72}
+                className="h-14 w-14 object-cover sm:h-18 sm:w-18"
+                priority
+              />
+            </motion.div>
+
+            <div className="relative z-10 flex flex-col items-center gap-6 text-center sm:gap-7">
+              <motion.p
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{
+                  duration: MOTION.duration.normal,
+                  delay: MOTION.stagger,
+                  ease: MOTION.easeOut,
+                }}
+                className="text-[11px] font-semibold uppercase tracking-[0.3em] text-rose-500"
+              >
+                {valentineConfig.eyebrow}
+              </motion.p>
+
+              <motion.h1
+                initial={{ opacity: 0, y: 20, scale: 0.98 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                transition={{
+                  duration: MOTION.duration.entrance,
+                  delay: MOTION.stagger * 2,
+                  ease: MOTION.ease,
+                }}
+                className="max-w-lg bg-linear-to-br from-rose-700 via-pink-600 to-rose-800 bg-clip-text text-[2rem] font-extrabold leading-tight tracking-tight text-transparent sm:text-5xl md:text-[3.25rem] md:leading-[1.12]"
+              >
+                {headlineLine1}
+                <span className="mt-1.5 block text-pink-600">
+                  {valentineConfig.headline.line2}
+                </span>
+              </motion.h1>
+
+              <motion.p
+                key={noClickCount}
+                initial={{ opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -6 }}
+                transition={{
+                  duration: MOTION.duration.normal,
+                  delay: noClickCount > 0 ? 0 : MOTION.stagger * 2.5,
+                  ease: MOTION.easeOut,
+                }}
+                className="mt-2 flex items-center justify-center gap-1.5 text-[0.8125rem] font-medium italic text-stone-500 sm:text-sm"
+              >
+                {noClickCount > 0 ? (
+                  <>
+                    <span>{sadMessage}</span>
+                    <Frown
+                      className="h-3.5 w-3.5 text-rose-400/60"
+                      aria-hidden
+                    />
+                  </>
+                ) : (
+                  <>
+                    <span>Made specially for someone who matters</span>
+                    <Heart
+                      className="h-3.5 w-3.5 fill-rose-400/60 text-rose-400/60"
+                      aria-hidden
+                    />
+                  </>
+                )}
+              </motion.p>
+
+              <div className="mt-4 min-h-[120px] flex items-center justify-center sm:min-h-[140px]">
+                <AnimatePresence mode="wait">
+                  {noClickCount === 0 ? (
+                    <motion.p
+                      key="promise"
+                      initial={{ opacity: 0, y: 6 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -6 }}
+                      transition={{
+                        duration: MOTION.duration.normal,
+                        delay: MOTION.stagger * 3.5,
+                        ease: MOTION.easeOut,
+                      }}
+                      className="max-w-md text-center text-[0.875rem] leading-relaxed text-stone-600 sm:text-[0.9375rem]"
+                    >
+                      {valentineConfig.promise}
+                    </motion.p>
+                  ) : (
+                    <motion.div
+                      key="crying-cat"
+                      initial={{ opacity: 0, scale: 0.88, y: 6 }}
+                      animate={{ opacity: 1, scale: 1, y: 0 }}
+                      exit={{ opacity: 0, scale: 0.92 }}
+                      transition={{
+                        type: "spring",
+                        stiffness: 280,
+                        damping: 22,
+                        delay: 0.2,
+                      }}
+                      className="flex justify-center"
+                    >
+                      <Image
+                        src={valentineConfig.images.cryingCat}
+                        alt=""
+                        width={96}
+                        height={96}
+                        className="h-20 w-20 object-cover sm:h-24 sm:w-24"
+                        unoptimized
+                      />
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+
+              <motion.div
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{
+                  duration: MOTION.duration.normal,
+                  delay: MOTION.stagger * 3,
+                  ease: MOTION.easeOut,
+                }}
+                className="mt-1 flex w-full flex-col items-center justify-center gap-4 sm:flex-row sm:gap-4"
+              >
+                <motion.button
+                  type="button"
+                  whileHover={{
+                    scale: isConfettiRunning ? 1 : yesScale + 0.04,
+                    y: isConfettiRunning ? 0 : -2,
+                    boxShadow:
+                      "0 10px 24px -6px rgba(190, 18, 60, 0.35), 0 0 0 1px rgba(255,255,255,0.25) inset",
+                  }}
+                  whileTap={{
+                    scale: isConfettiRunning
+                      ? 1
+                      : Math.max(yesScale - 0.02, 0.98),
+                    y: 0,
+                  }}
+                  animate={{ scale: yesScale }}
+                  transition={{ type: "spring", stiffness: 280, damping: 20 }}
+                  onClick={handleYesClick}
+                  disabled={isConfettiRunning}
+                  className={`inline-flex min-h-[48px] min-w-[140px] shrink-0 touch-manipulation items-center justify-center rounded-full bg-linear-to-r from-rose-500 via-pink-500 to-rose-600 px-8 py-4 text-[0.9375rem] font-semibold text-white shadow-[0_4px_14px_-2px_rgba(190,18,60,0.35)] transition-shadow duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-400/60 focus-visible:ring-offset-2 focus-visible:ring-offset-white active:scale-[0.98] sm:min-h-[48px] sm:min-w-[160px] sm:px-10 sm:py-3.5 ${yesCursorClasses}`}
+                >
+                  <span className="mr-1.5">Yes</span>
+                  <Heart className="h-5 w-5 fill-current" aria-hidden />
+                </motion.button>
+
+                <motion.div
+                  className="relative min-h-[48px] w-[140px] shrink-0 sm:h-auto sm:w-auto origin-center"
+                  animate={{
+                    x: noOffsets.x,
+                    y: noOffsets.y,
+                    scale: noScale,
+                  }}
+                  transition={{
+                    x: { type: "spring", stiffness: 180, damping: 16 },
+                    y: { type: "spring", stiffness: 180, damping: 16 },
+                    scale: { type: "spring", stiffness: 320, damping: 22 },
+                  }}
+                >
+                  <motion.button
+                    type="button"
+                    onMouseEnter={handleNoMove}
+                    onTouchStart={handleNoTouchStart}
+                    onClick={handleNoClick}
+                    whileHover={{
+                      scale: 1.03,
+                      y: -1,
+                      boxShadow:
+                        "0 4px 12px -2px rgba(0,0,0,0.08), 0 0 0 1px rgba(255,255,255,0.6) inset",
+                    }}
+                    whileTap={{ scale: 0.98, y: 0 }}
+                    className={`inline-flex h-12 min-h-[48px] w-full touch-manipulation items-center justify-center rounded-full border border-pink-200 bg-pink-50/80 px-6 py-3.5 text-[0.875rem] font-medium text-stone-600 shadow-sm transition-shadow duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-400/50 focus-visible:ring-offset-2 focus-visible:ring-offset-white active:scale-[0.98] sm:h-12 sm:min-h-[48px] sm:w-auto sm:px-8 ${noCursorClasses}`}
+                  >
+                    <span className="mr-1.5">
+                      {noClickCount === 0 ? "No" : noButtonLabel}
+                    </span>
+                    <Frown className="h-4 w-4" aria-hidden />
+                  </motion.button>
+                </motion.div>
+              </motion.div>
+            </div>
+          </motion.section>
+        )}
+
+        {isAccepted && (
+          <motion.section
+            key="valentine-accepted"
+            initial={{ opacity: 0, scale: 0.88, y: 24 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.96 }}
+            transition={{
+              duration: 0.56,
+              delay: 1.1,
+              ease: MOTION.ease,
+            }}
+            className="relative z-40 w-full max-w-xl overflow-hidden rounded-2xl border border-pink-200/80 bg-white p-5 text-center shadow-[0_4px_24px_-4px_rgba(190,18,60,0.12),0_0_1px_0_rgba(0,0,0,0.04)] sm:rounded-3xl sm:p-8 md:p-10"
+          >
+            <div className="pointer-events-none absolute inset-0">
+              <div className="absolute inset-x-12 top-0 h-44 bg-linear-to-b from-rose-50/70 via-pink-50/40 to-transparent blur-3xl" />
+              <div className="absolute -left-20 bottom-0 h-52 w-52 rounded-full bg-pink-100/40 blur-3xl" />
+            </div>
+
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{
+                delay: MOTION.stagger * 3,
+                duration: MOTION.duration.normal,
+                ease: MOTION.ease,
+              }}
+              className="absolute right-4 top-4 z-20 overflow-hidden rounded-xl border border-pink-200/70 shadow-md sm:right-5 sm:top-5"
+            >
+              <Image
+                src={valentineConfig.images.cornerCat}
+                alt=""
+                width={72}
+                height={72}
+                className="h-14 w-14 object-cover sm:h-18 sm:w-18"
+              />
+            </motion.div>
+
+            <div className="relative z-10 flex flex-col items-center gap-3 sm:gap-4">
+              <motion.div
+                initial={{ scale: 0, rotate: -12 }}
+                animate={{ scale: 1, rotate: 0 }}
+                transition={{
+                  type: "spring",
+                  stiffness: 240,
+                  damping: 18,
+                  delay: MOTION.stagger,
+                }}
+                className="flex justify-center"
+              >
+                <Image
+                  src={valentineConfig.images.huggingCat}
+                  alt=""
+                  width={176}
+                  height={176}
+                  className="h-36 w-36 object-cover sm:h-44 sm:w-44"
+                  unoptimized
+                />
+              </motion.div>
+
+              <motion.h2
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{
+                  duration: MOTION.duration.normal,
+                  delay: MOTION.stagger * 2,
+                  ease: MOTION.easeOut,
+                }}
+                className="max-w-md bg-linear-to-br from-rose-700 via-pink-600 to-rose-800 bg-clip-text text-2xl font-extrabold leading-tight tracking-tight text-transparent sm:text-3xl"
+              >
+                {successHeadline}
+              </motion.h2>
+
+              <motion.p
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{
+                  duration: MOTION.duration.normal,
+                  delay: MOTION.stagger * 3,
+                  ease: MOTION.easeOut,
+                }}
+                className="max-w-md text-balance text-[0.9375rem] leading-[1.6] text-stone-600 sm:text-base sm:leading-[1.65]"
+              >
+                {replaceSenderName(valentineConfig.success.message, senderName)}
+              </motion.p>
+
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{
+                  duration: MOTION.duration.normal,
+                  delay: MOTION.stagger * 4,
+                }}
+                className="mt-2 flex items-center justify-center gap-2 text-rose-600"
+              >
+                <Avatar name={senderName} size="sm" />
+                <span className="text-[0.875rem] font-medium">
+                  {replaceSenderName(
+                    valentineConfig.success.signature,
+                    senderName,
+                  )}
+                </span>
+              </motion.div>
+
+              <motion.div
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{
+                  duration: MOTION.duration.normal,
+                  delay: MOTION.stagger * 5,
+                  ease: MOTION.easeOut,
+                }}
+                className="mt-3 w-full sm:mt-4"
+              >
+                <p className="mb-2 text-[0.75rem] font-semibold uppercase tracking-wider text-stone-500 sm:text-[0.8125rem]">
+                  Share the love
+                </p>
+                <div className="flex flex-col gap-3 sm:flex-row sm:justify-center sm:gap-4">
+                  <a
+                    href={whatsAppShareUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label="Share on WhatsApp"
+                    className="inline-flex min-h-[48px] shrink-0 touch-manipulation items-center justify-center gap-2 rounded-xl border border-green-200 bg-[#25D366]/10 px-5 py-3 text-[0.9375rem] font-semibold text-[#128C7E] transition-colors hover:bg-[#25D366]/20 active:scale-[0.98] sm:px-6"
+                  >
+                    <MessageCircle className="h-5 w-5 shrink-0" aria-hidden />
+                    <span>Share on WhatsApp</span>
+                  </a>
+                  <motion.button
+                    type="button"
+                    onClick={handleCopyLink}
+                    disabled={!shareUrl}
+                    aria-label={copied ? "Link copied" : "Copy link"}
+                    whileTap={{ scale: 0.98 }}
+                    className="inline-flex min-h-[48px] shrink-0 touch-manipulation items-center justify-center gap-2 rounded-xl border border-pink-200 bg-pink-50/80 px-5 py-3 text-[0.9375rem] font-semibold text-rose-700 transition-colors hover:bg-pink-100 active:scale-[0.98] disabled:opacity-60 sm:px-6"
+                  >
+                    {copied ? (
+                      <Check className="h-5 w-5 shrink-0" aria-hidden />
+                    ) : (
+                      <Link2 className="h-5 w-5 shrink-0" aria-hidden />
+                    )}
+                    <span>{copied ? "Copied!" : "Copy link"}</span>
+                  </motion.button>
+                </div>
+              </motion.div>
+            </div>
+          </motion.section>
+        )}
+      </AnimatePresence>
+
+      <motion.footer
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.4, delay: 0.5 }}
+        className="absolute bottom-0 left-0 right-0 z-30 w-full border-t border-pink-100/50 bg-white/80 py-2.5 backdrop-blur-sm sm:py-3"
+      >
+        <div className="mx-auto flex max-w-xl flex-col items-center justify-center gap-1.5 px-4 text-center sm:flex-row sm:gap-2 sm:px-5">
+          <p className="text-[0.75rem] text-stone-600 sm:text-[0.8125rem]">
+            Want one like this?
+          </p>
+          <a
+            href="https://www.instagram.com/rushiii.js"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="group relative inline-flex min-h-[40px] touch-manipulation items-center justify-center gap-1.5 overflow-hidden rounded-full border border-rose-200/60 bg-linear-to-r from-rose-500 via-pink-500 to-rose-600 px-4 py-2 text-[0.8125rem] font-semibold text-white shadow-[0_2px_8px_-2px_rgba(190,18,60,0.25)] transition-all duration-200 hover:scale-105 hover:border-rose-300/80 hover:shadow-[0_4px_12px_-2px_rgba(190,18,60,0.35)] hover:brightness-105 active:scale-[0.98] sm:min-h-[42px] sm:px-5 sm:py-2.5 sm:text-sm"
+          >
+            <Instagram
+              className="h-4 w-4 shrink-0 transition-transform group-hover:scale-110 sm:h-[18px] sm:w-[18px]"
+              aria-hidden
+            />
+            <span className="whitespace-nowrap">DM me on Instagram</span>
+            <Heart
+              className="h-3.5 w-3.5 shrink-0 fill-current transition-transform group-hover:scale-110 sm:h-4 sm:w-4"
+              aria-hidden
+            />
+          </a>
+        </div>
+      </motion.footer>
+    </div>
+  );
+}
