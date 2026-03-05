@@ -17,7 +17,10 @@ import {
 import { valentineConfig, replaceSenderName } from "@/config/valentine";
 import { CelebrationOverlay } from "@/components/CelebrationOverlay";
 import { FloatingHearts } from "@/components/FloatingHearts";
+<<<<<<< HEAD
 import { Avatar } from "@/components/Avatar";
+=======
+>>>>>>> e188e05b6affeb9b869d1aaf38723e2d239ecfa1
 
 const MusicToggle = memo(function MusicToggle({
   musicOn,
@@ -287,7 +290,11 @@ export function ValentinePage() {
   }, [noClickCount]);
 
   return (
+<<<<<<< HEAD
     <div className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden bg-pink-50/90 py-12 pl-[max(1rem,env(safe-area-inset-left))] pr-[max(1rem,env(safe-area-inset-right))] pb-20 text-stone-800 sm:px-5 sm:py-16 sm:pb-24 dark:bg-slate-950 dark:text-slate-100">
+=======
+    <div className="relative flex min-h-screen flex-col items-center overflow-hidden bg-pink-50/90 pt-[max(3rem,calc(1rem+env(safe-area-inset-top)))] pb-[max(5rem,calc(1.5rem+env(safe-area-inset-bottom)))] pl-[max(1rem,env(safe-area-inset-left))] pr-[max(1rem,env(safe-area-inset-right))] text-stone-800 sm:px-5 sm:pt-[max(4rem,calc(1rem+env(safe-area-inset-top)))] sm:pb-[max(5.5rem,calc(1.5rem+env(safe-area-inset-bottom)))]">
+>>>>>>> e188e05b6affeb9b869d1aaf38723e2d239ecfa1
       {showMusicToggle && (
         <MusicToggle musicOn={musicOn} onToggle={toggleMusic} />
       )}
@@ -608,13 +615,18 @@ export function ValentinePage() {
                 {replaceSenderName(valentineConfig.success.message, senderName)}
               </motion.p>
 
+<<<<<<< HEAD
               <motion.div
+=======
+              <motion.p
+>>>>>>> e188e05b6affeb9b869d1aaf38723e2d239ecfa1
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{
                   duration: MOTION.duration.normal,
                   delay: MOTION.stagger * 4,
                 }}
+<<<<<<< HEAD
                 className="mt-2 flex items-center justify-center gap-2 text-rose-600"
               >
                 <Avatar name={senderName} size="sm" />
@@ -625,6 +637,15 @@ export function ValentinePage() {
                   )}
                 </span>
               </motion.div>
+=======
+                className="mt-2 text-[0.875rem] font-medium text-rose-600"
+              >
+                {replaceSenderName(
+                  valentineConfig.success.signature,
+                  senderName,
+                )}
+              </motion.p>
+>>>>>>> e188e05b6affeb9b869d1aaf38723e2d239ecfa1
 
               <motion.div
                 initial={{ opacity: 0, y: 8 }}
@@ -676,7 +697,11 @@ export function ValentinePage() {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.4, delay: 0.5 }}
+<<<<<<< HEAD
         className="absolute bottom-0 left-0 right-0 z-30 w-full border-t border-pink-100/50 bg-white/80 py-2.5 backdrop-blur-sm sm:py-3"
+=======
+        className="fixed bottom-0 left-0 right-0 z-30 w-full border-t border-pink-100/50 bg-white/80 py-2.5 backdrop-blur-sm sm:py-3"
+>>>>>>> e188e05b6affeb9b869d1aaf38723e2d239ecfa1
       >
         <div className="mx-auto flex max-w-xl flex-col items-center justify-center gap-1.5 px-4 text-center sm:flex-row sm:gap-2 sm:px-5">
           <p className="text-[0.75rem] text-stone-600 sm:text-[0.8125rem]">
