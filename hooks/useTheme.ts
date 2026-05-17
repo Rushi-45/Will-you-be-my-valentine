@@ -9,12 +9,16 @@ const STORAGE_KEY = "valentine-theme";
 function getInitialTheme(): Theme {
   if (typeof window === "undefined") return "light";
 
+  // Source of truth set by the inline bootstrap script in app/layout.tsx
+  const root = document.documentElement;
+  if (root.classList.contains("dark")) return "dark";
+  if (root.classList.contains("light")) return "light";
+
   const stored = localStorage.getItem(STORAGE_KEY);
   if (stored === "light" || stored === "dark") {
     return stored;
   }
 
-  // Fall back to system preference
   if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
     return "dark";
   }

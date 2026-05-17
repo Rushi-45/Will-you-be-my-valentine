@@ -56,7 +56,7 @@ function HeaderComponent({ senderName, recipientName }: HeaderProps) {
             href="/"
             className="text-sm font-semibold text-rose-600 transition-colors hover:text-rose-700 dark:text-rose-400 dark:hover:text-rose-300"
           >
-            Valentine
+            Wishing Cards
           </Link>
         </div>
 

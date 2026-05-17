@@ -53,18 +53,6 @@
   --border: #6b2c47;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root:not(.light) {
-    --background: #09060a;
-    --foreground: #fafaf9;
-    --surface: #1e1e2e;
-    --primary: #f472b6;
-    --primary-soft: #831843;
-    --muted: #a8a29e;
-    --border: #6b2c47;
-  }
-}
-
 html {
   scroll-behavior: smooth;
   text-rendering: optimizeLegibility;

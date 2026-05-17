@@ -156,7 +156,7 @@ function FloatingHeartsComponent() {
           }}
         >
           <Heart
-            className={`${config.size} text-rose-300 fill-rose-300/30`}
+            className={`${config.size} text-rose-300 fill-rose-300/30 dark:text-rose-500 dark:fill-rose-500/30`}
             aria-hidden
           />
         </motion.div>
