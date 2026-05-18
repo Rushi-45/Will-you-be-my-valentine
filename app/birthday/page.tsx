@@ -24,16 +24,21 @@ export async function generateMetadata({ searchParams }: PageProps): Promise<Met
   const ageLabel = age && Number.isFinite(age) && age > 0 ? ` ${ordinal(age)}` : "";
 
   if (!name) {
-    return { title: "Happy Birthday — Wishing Cards" };
+    return {
+      title: "Happy Birthday",
+      description: "Send a personalized, animated birthday card. Blow out the candles and make a wish!",
+      openGraph: { type: "website" },
+      twitter: { card: "summary_large_image" },
+    };
   }
 
   const title = `Happy${ageLabel} Birthday, ${capitalize(name)}!`;
-  const description = `A special birthday wish for ${capitalize(name)}.`;
+  const description = `A special birthday card made just for ${capitalize(name)}. Blow out the candles and make a wish!`;
   return {
     title,
     description,
-    openGraph: { title, description },
-    twitter: { title, description },
+    openGraph: { title, description, type: "website" },
+    twitter: { card: "summary_large_image", title, description },
   };
 }
 

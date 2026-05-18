@@ -24,16 +24,21 @@ export async function generateMetadata({ searchParams }: PageProps): Promise<Met
   const yearsLabel = years && Number.isFinite(years) && years > 0 ? ` ${ordinal(years)}` : "";
 
   if (!name) {
-    return { title: "Happy Anniversary — Wishing Cards" };
+    return {
+      title: "Happy Anniversary",
+      description: "Send a personalized, animated anniversary card. Open the envelope and celebrate your love.",
+      openGraph: { type: "website" },
+      twitter: { card: "summary_large_image" },
+    };
   }
 
   const title = `Happy${yearsLabel} Anniversary, ${capitalize(name)}!`;
-  const description = `A special anniversary message for ${capitalize(name)}.`;
+  const description = `A special anniversary card made just for ${capitalize(name)}.`;
   return {
     title,
     description,
-    openGraph: { title, description },
-    twitter: { title, description },
+    openGraph: { title, description, type: "website" },
+    twitter: { card: "summary_large_image", title, description },
   };
 }
 

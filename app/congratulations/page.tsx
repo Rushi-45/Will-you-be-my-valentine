@@ -15,16 +15,21 @@ export async function generateMetadata({ searchParams }: PageProps): Promise<Met
   const name = params?.name?.trim();
 
   if (!name) {
-    return { title: "Congratulations — Wishing Cards" };
+    return {
+      title: "Congratulations",
+      description: "Send a personalized congratulations card. Pop the party popper and celebrate their achievement!",
+      openGraph: { type: "website" },
+      twitter: { card: "summary_large_image" },
+    };
   }
 
   const title = `Congratulations, ${capitalize(name)}!`;
-  const description = `A heartfelt congratulations message for ${capitalize(name)}.`;
+  const description = `A special congratulations card made just for ${capitalize(name)}.`;
   return {
     title,
     description,
-    openGraph: { title, description },
-    twitter: { title, description },
+    openGraph: { title, description, type: "website" },
+    twitter: { card: "summary_large_image", title, description },
   };
 }
 

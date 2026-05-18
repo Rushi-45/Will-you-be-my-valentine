@@ -15,16 +15,21 @@ export async function generateMetadata({ searchParams }: PageProps): Promise<Met
   const name = params?.name?.trim();
 
   if (!name) {
-    return { title: "Get Well Soon — Wishing Cards" };
+    return {
+      title: "Get Well Soon",
+      description: "Send a warm, personalized get-well card. Remind them that tough days don't last forever.",
+      openGraph: { type: "website" },
+      twitter: { card: "summary_large_image" },
+    };
   }
 
   const title = `Get Well Soon, ${capitalize(name)}!`;
-  const description = `A heartfelt get-well message for ${capitalize(name)}.`;
+  const description = `A warm get-well card made just for ${capitalize(name)}.`;
   return {
     title,
     description,
-    openGraph: { title, description },
-    twitter: { title, description },
+    openGraph: { title, description, type: "website" },
+    twitter: { card: "summary_large_image", title, description },
   };
 }
 

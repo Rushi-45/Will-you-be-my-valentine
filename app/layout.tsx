@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import { valentineConfig } from "@/config/valentine";
+import { siteConfig } from "@/config/site";
 import "./globals.css";
 
 export const viewport: Viewport = {
@@ -20,46 +20,58 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-const siteUrl = valentineConfig.site.url ?? undefined;
+const base = siteConfig.url || undefined;
 
 export const metadata: Metadata = {
-  metadataBase: siteUrl ? new URL(siteUrl) : undefined,
-  title: valentineConfig.site.title,
-  description: valentineConfig.site.description,
-  keywords: [...valentineConfig.site.keywords],
+  metadataBase: base ? new URL(base) : undefined,
+  title: {
+    template: `%s | ${siteConfig.name}`,
+    default: `${siteConfig.name} — ${siteConfig.tagline}`,
+  },
+  description: siteConfig.description,
+  keywords: [...siteConfig.keywords],
   robots: {
     index: true,
     follow: true,
     googleBot: { index: true, follow: true },
   },
-  icons: {
-    icon: valentineConfig.site.favicon,
-  },
+  icons: { icon: siteConfig.favicon },
   openGraph: {
-    title: valentineConfig.site.title,
-    description: valentineConfig.site.description,
+    siteName: siteConfig.name,
+    title: `${siteConfig.name} — ${siteConfig.tagline}`,
+    description: siteConfig.description,
     type: "website",
-    ...(siteUrl && { url: siteUrl }),
-    ...(valentineConfig.site.ogImage && {
-      images: [
-        {
-          url: valentineConfig.site.ogImage,
-          width: 1200,
-          height: 630,
-          alt: valentineConfig.site.title,
-        },
-      ],
-    }),
+    ...(base && { url: base }),
   },
   twitter: {
-    card: valentineConfig.site.ogImage ? "summary_large_image" : "summary",
-    title: valentineConfig.site.title,
-    description: valentineConfig.site.description,
-    ...(valentineConfig.site.ogImage && {
-      images: [valentineConfig.site.ogImage],
-    }),
+    card: "summary_large_image",
+    title: `${siteConfig.name} — ${siteConfig.tagline}`,
+    description: siteConfig.description,
   },
-  alternates: siteUrl ? { canonical: siteUrl } : undefined,
+  ...(base && { alternates: { canonical: base } }),
+};
+
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebSite",
+      "@id": `${siteConfig.url}/#website`,
+      url: siteConfig.url,
+      name: siteConfig.name,
+      description: siteConfig.description,
+    },
+    {
+      "@type": "Organization",
+      "@id": `${siteConfig.url}/#organization`,
+      name: siteConfig.name,
+      url: siteConfig.url,
+      logo: {
+        "@type": "ImageObject",
+        url: `${siteConfig.url}${siteConfig.favicon}`,
+      },
+    },
+  ],
 };
 
 const themeBootstrap = `
@@ -83,6 +95,10 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeBootstrap }} />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
       </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}

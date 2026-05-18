@@ -18,17 +18,22 @@ export async function generateMetadata({ searchParams }: PageProps): Promise<Met
   const validYear = year && Number.isFinite(year) && year > 1900 && year < 2200 ? year : null;
 
   if (!name) {
-    return { title: "Congratulations, Graduate — Wishing Cards" };
+    return {
+      title: "Congratulations, Graduate",
+      description: "Send a personalized graduation card. Toss your cap and celebrate the milestone!",
+      openGraph: { type: "website" },
+      twitter: { card: "summary_large_image" },
+    };
   }
 
   const eyebrow = validYear ? `Class of ${validYear}` : "Congratulations";
   const title = `${eyebrow}, ${capitalize(name)}!`;
-  const description = `A special graduation message for ${capitalize(name)}.`;
+  const description = `A special graduation card made just for ${capitalize(name)}.`;
   return {
     title,
     description,
-    openGraph: { title, description },
-    twitter: { title, description },
+    openGraph: { title, description, type: "website" },
+    twitter: { card: "summary_large_image", title, description },
   };
 }
 
