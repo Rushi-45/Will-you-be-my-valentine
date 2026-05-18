@@ -72,7 +72,7 @@ export const occasions: readonly Occasion[] = [
     icon: MessageCircleHeart,
     gradient: "from-emerald-500 via-teal-500 to-emerald-600",
     bgGradient: "from-emerald-50 to-teal-50",
-    implemented: false,
+    implemented: true,
   },
   {
     name: "Get Well",
