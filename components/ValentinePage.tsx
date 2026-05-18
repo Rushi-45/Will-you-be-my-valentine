@@ -14,13 +14,14 @@ import {
   Volume2,
   VolumeX,
 } from "lucide-react";
+import Link from "next/link";
 import { valentineConfig, replaceSenderName } from "@/config/valentine";
 import { CelebrationOverlay } from "@/components/CelebrationOverlay";
 import { FloatingHearts } from "@/components/FloatingHearts";
-import { Header } from "@/components/Header";
 import { Avatar } from "@/components/Avatar";
 import { Icon } from "@/components/ui/Icon";
 import { AnimatedHeadline } from "@/components/AnimatedHeadline";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 const MusicToggle = memo(function MusicToggle({
   musicOn,
@@ -346,7 +347,7 @@ export function ValentinePage() {
   );
 
   return (
-    <div className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden bg-pink-50/50 pb-20 pl-[max(1rem,env(safe-area-inset-left))] pr-[max(1rem,env(safe-area-inset-right))] pt-20 text-stone-800 sm:px-5 sm:pb-24 sm:pt-24 dark:bg-slate-950/60 dark:text-slate-100">
+    <div className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden bg-pink-50/50 pb-20 pl-[max(1rem,env(safe-area-inset-left))] pr-[max(1rem,env(safe-area-inset-right))] pt-16 text-stone-800 sm:px-5 sm:pb-24 sm:pt-20 dark:bg-slate-950/60 dark:text-slate-100">
       {/* V2: Ambient pulsing glow rings — fixed centered behind card */}
       <div
         className="pointer-events-none fixed inset-0 z-0 flex items-center justify-center overflow-hidden"
@@ -371,7 +372,21 @@ export function ValentinePage() {
         ))}
       </div>
 
-      <Header label={recipientName ? `For ${recipientName}` : "Valentine's Day"} />
+      {/* Floating back link — top-left, mirrors homepage floating toggle */}
+      <div className="fixed left-4 top-4 z-40 sm:left-6 sm:top-6">
+        <Link
+          href="/"
+          className="inline-flex items-center gap-1.5 rounded-full border border-rose-200/70 bg-white/90 px-3 py-2 text-[0.75rem] font-semibold text-rose-600 shadow-[0_4px_16px_-4px_rgba(190,18,60,0.18)] backdrop-blur-sm transition-colors hover:bg-white dark:border-slate-700 dark:bg-slate-900/80 dark:text-rose-400 dark:hover:bg-slate-900"
+        >
+          <Heart className="h-3.5 w-3.5 fill-current" aria-hidden />
+          <span>Wishing Cards</span>
+        </Link>
+      </div>
+
+      {/* Floating theme toggle — top-right, same position as homepage */}
+      <div className="fixed right-4 top-4 z-40 sm:right-6 sm:top-6">
+        <ThemeToggle variant="floating" />
+      </div>
 
       {showMusicToggle && (
         <MusicToggle musicOn={musicOn} onToggle={toggleMusic} />
