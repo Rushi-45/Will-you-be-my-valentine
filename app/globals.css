@@ -148,10 +148,24 @@ html {
   animation: shimmer-once 1.5s cubic-bezier(0.22, 1, 0.36, 1) 0.7s 1;
 }
 
+/* Brief horizontal shake — fired on the valentine card when "No" is clicked. */
+@keyframes card-shake {
+  0%, 100% { transform: translateX(0); }
+  18%       { transform: translateX(-10px); }
+  36%       { transform: translateX(8px); }
+  54%       { transform: translateX(-5px); }
+  72%       { transform: translateX(2px); }
+}
+
+.animate-card-shake {
+  animation: card-shake 0.45s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .animate-slow-bob,
   .animate-heart-pulse,
-  .animate-shimmer-once {
+  .animate-shimmer-once,
+  .animate-card-shake {
     animation: none;
   }
 }
