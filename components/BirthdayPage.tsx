@@ -1,0 +1,503 @@
+"use client";
+
+import { memo, useCallback, useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { motion, AnimatePresence } from "framer-motion";
+import { Check, Heart, Instagram, Link2, MessageCircle } from "lucide-react";
+import Link from "next/link";
+import { birthdayConfig, replaceSenderName } from "@/config/birthday";
+import { Avatar } from "@/components/Avatar";
+import { ThemeToggle } from "@/components/ThemeToggle";
+import { AnimatedHeadline } from "@/components/AnimatedHeadline";
+
+// ─── constants ────────────────────────────────────────────────────────────────
+
+const MAX_CANDLES = 8;
+
+const CANDLE_GRADIENTS = [
+  "from-rose-300 to-rose-400",
+  "from-sky-300 to-sky-400",
+  "from-amber-200 to-yellow-300",
+  "from-emerald-300 to-emerald-400",
+  "from-purple-300 to-purple-400",
+  "from-pink-300 to-pink-400",
+  "from-orange-300 to-orange-400",
+  "from-teal-300 to-teal-400",
+] as const;
+
+const EASE = [0.16, 1, 0.3, 1] as const;
+const EASE_OUT = [0.4, 0, 0.2, 1] as const;
+
+// ─── helpers ──────────────────────────────────────────────────────────────────
+
+function capitalize(s: string) {
+  return s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
+}
+
+function ordinal(n: number) {
+  const s = ["th", "st", "nd", "rd"];
+  const v = n % 100;
+  return n + (s[(v - 20) % 10] ?? s[v] ?? s[0]);
+}
+
+// ─── Flame ────────────────────────────────────────────────────────────────────
+
+function Flame() {
+  return (
+    <div className="relative flex items-end justify-center">
+      <motion.div
+        className="absolute bottom-0 h-5 w-5 rounded-full bg-amber-300/50 blur-md"
+        animate={{ scale: [1, 1.3, 0.88, 1.2, 1], opacity: [0.5, 0.78, 0.32, 0.68, 0.5] }}
+        transition={{ duration: 1.1, repeat: Infinity, ease: "easeInOut" }}
+      />
+      <motion.div
+        className="relative h-6 w-3 bg-linear-to-t from-orange-500 via-amber-400 to-yellow-200"
+        style={{
+          borderRadius: "50% 50% 20% 20% / 60% 60% 40% 40%",
+          transformOrigin: "50% 100%",
+        }}
+        animate={{
+          scaleX: [1, 0.84, 1.1, 0.88, 1],
+          scaleY: [1, 1.12, 0.92, 1.08, 1],
+          rotate: [-3, 5, -5, 2, -3],
+        }}
+        transition={{ duration: 0.9, repeat: Infinity, ease: "easeInOut" }}
+      />
+    </div>
+  );
+}
+
+// ─── Candle ───────────────────────────────────────────────────────────────────
+
+const Candle = memo(function Candle({
+  index,
+  blown,
+  onBlow,
+}: {
+  index: number;
+  blown: boolean;
+  onBlow: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onBlow}
+      disabled={blown}
+      aria-label={blown ? `Candle ${index + 1} blown out` : `Blow out candle ${index + 1}`}
+      className="group flex flex-col items-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400/60 focus-visible:ring-offset-2 rounded-sm"
+    >
+      {/* Fixed-height slot keeps cake from shifting as flames disappear */}
+      <div className="flex h-8 w-5 items-end justify-center">
+        <AnimatePresence>
+          {!blown && (
+            <motion.div
+              key="flame"
+              initial={{ scale: 0, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0, opacity: 0, y: -8, transition: { duration: 0.22 } }}
+            >
+              <Flame />
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+      {/* Wick */}
+      <div className="h-1.5 w-px bg-stone-500 dark:bg-stone-400" />
+      {/* Body */}
+      <motion.div
+        className={`w-3 rounded-t-sm bg-linear-to-b ${CANDLE_GRADIENTS[index % CANDLE_GRADIENTS.length]}`}
+        style={{ height: 32 }}
+        animate={{ opacity: blown ? 0.5 : 1 }}
+        transition={{ duration: 0.3 }}
+      />
+    </button>
+  );
+});
+
+// ─── BirthdayCake ─────────────────────────────────────────────────────────────
+
+function BirthdayCake({
+  candleCount,
+  blownCandles,
+  onBlow,
+}: {
+  candleCount: number;
+  blownCandles: Set<number>;
+  onBlow: (i: number) => void;
+}) {
+  return (
+    <div className="flex select-none flex-col items-center">
+      {/* Candles */}
+      <div className="flex items-end justify-center gap-2 px-2">
+        {Array.from({ length: candleCount }, (_, i) => (
+          <Candle
+            key={i}
+            index={i}
+            blown={blownCandles.has(i)}
+            onBlow={() => onBlow(i)}
+          />
+        ))}
+      </div>
+
+      {/* Tier 1 — top */}
+      <div className="relative w-36 sm:w-44">
+        <div className="h-1.5 rounded-t-md bg-white/85 dark:bg-white/50" />
+        <div className="h-10 sm:h-12 bg-linear-to-b from-sky-100 to-sky-200 dark:from-sky-700 dark:to-sky-800" />
+        <div className="absolute -bottom-2 left-0 right-0 z-10 flex justify-around px-3">
+          {Array.from({ length: 4 }, (_, i) => (
+            <div
+              key={i}
+              className="h-3 w-3 rounded-b-full bg-white/90 shadow-sm dark:bg-white/55"
+            />
+          ))}
+        </div>
+      </div>
+
+      {/* Tier 2 — middle */}
+      <div className="relative w-48 sm:w-56">
+        <div className="h-11 sm:h-13 bg-linear-to-b from-blue-200 to-blue-300 dark:from-blue-600 dark:to-blue-700" />
+        <div className="absolute -bottom-2 left-0 right-0 z-10 flex justify-around px-2.5">
+          {Array.from({ length: 5 }, (_, i) => (
+            <div
+              key={i}
+              className="h-3 w-3 rounded-b-full bg-white/85 shadow-sm dark:bg-white/50"
+            />
+          ))}
+        </div>
+      </div>
+
+      {/* Tier 3 — bottom */}
+      <div className="w-60 sm:w-72">
+        <div className="h-12 sm:h-14 rounded-b-xl bg-linear-to-b from-blue-300 to-blue-400 dark:from-blue-500 dark:to-blue-600" />
+      </div>
+
+      {/* Plate */}
+      <div className="mt-1 h-3 w-64 rounded-full bg-stone-200 shadow-sm sm:w-80 dark:bg-stone-600" />
+    </div>
+  );
+}
+
+// ─── BirthdayPage ─────────────────────────────────────────────────────────────
+
+export function BirthdayPage() {
+  const searchParams = useSearchParams();
+
+  const recipientName = useMemo(() => {
+    const raw = searchParams.get("name")?.trim();
+    return raw ? capitalize(raw) : null;
+  }, [searchParams]);
+
+  const senderName = useMemo(() => {
+    const raw = searchParams.get("sender")?.trim();
+    return raw ? capitalize(raw) : birthdayConfig.senderName;
+  }, [searchParams]);
+
+  const age = useMemo(() => {
+    const raw = searchParams.get("age")?.trim();
+    if (!raw) return null;
+    const n = parseInt(raw, 10);
+    return Number.isFinite(n) && n > 0 ? n : null;
+  }, [searchParams]);
+
+  const candleCount = useMemo(
+    () => Math.min(age ?? birthdayConfig.candleCount, MAX_CANDLES),
+    [age],
+  );
+
+  const eyebrow = useMemo(
+    () => (age ? `Happy ${ordinal(age)} Birthday` : birthdayConfig.eyebrow),
+    [age],
+  );
+
+  const headlineWords = useMemo(() => {
+    const text = recipientName
+      ? `Make a Wish, ${recipientName}!`
+      : "Make a Wish!";
+    return text.split(" ");
+  }, [recipientName]);
+
+  const successHeadline = useMemo(() => {
+    const base = age ? `Happy ${ordinal(age)} Birthday` : "Happy Birthday";
+    return recipientName ? `${base}, ${recipientName}!` : `${base}!`;
+  }, [age, recipientName]);
+
+  const [blownCandles, setBlownCandles] = useState<Set<number>>(new Set());
+  const [isCelebrating, setIsCelebrating] = useState(false);
+  const [shareUrl, setShareUrl] = useState("");
+  const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") setShareUrl(window.location.href);
+  }, []);
+
+  const allBlown = blownCandles.size === candleCount;
+
+  // Trigger confetti + reveal success card 450ms after last candle
+  useEffect(() => {
+    if (!allBlown || isCelebrating) return;
+    const timer = setTimeout(async () => {
+      setIsCelebrating(true);
+      const { default: confetti } = await import("canvas-confetti");
+      const colors = [
+        "#f59e0b", "#60a5fa", "#34d399",
+        "#f472b6", "#a78bfa", "#fb923c", "#ffffff",
+      ];
+      confetti({ particleCount: 70, spread: 90, origin: { x: 0.2, y: 0.55 }, colors, startVelocity: 48 });
+      confetti({ particleCount: 70, spread: 90, origin: { x: 0.8, y: 0.55 }, colors, startVelocity: 48 });
+      setTimeout(() => {
+        confetti({ particleCount: 90, spread: 130, origin: { x: 0.5, y: 0.4 }, colors, startVelocity: 55 });
+      }, 320);
+    }, 450);
+    return () => clearTimeout(timer);
+  }, [allBlown, isCelebrating]);
+
+  const handleBlow = useCallback((index: number) => {
+    setBlownCandles((prev) => {
+      if (prev.has(index)) return prev;
+      return new Set([...prev, index]);
+    });
+  }, []);
+
+  const handleCopyLink = useCallback(() => {
+    if (!shareUrl) return;
+    navigator.clipboard.writeText(shareUrl).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  }, [shareUrl]);
+
+  const whatsAppUrl = useMemo(() => {
+    if (!shareUrl) return "#";
+    return `https://wa.me/?text=${encodeURIComponent(`🎂 ${shareUrl}`)}`;
+  }, [shareUrl]);
+
+  const blownLeft = candleCount - blownCandles.size;
+
+  return (
+    <div className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden bg-sky-50/60 pb-20 pl-[max(1rem,env(safe-area-inset-left))] pr-[max(1rem,env(safe-area-inset-right))] pt-16 text-stone-800 sm:px-5 sm:pb-24 sm:pt-20 dark:bg-slate-950/70 dark:text-slate-100">
+      {/* Ambient glow rings — blue palette */}
+      <div
+        className="pointer-events-none fixed inset-0 z-0 flex items-center justify-center overflow-hidden"
+        aria-hidden
+      >
+        {([360, 500, 640] as const).map((size, i) => (
+          <motion.div
+            key={size}
+            className="absolute rounded-full border border-sky-300/20 dark:border-sky-700/20"
+            style={{ width: size, height: size }}
+            animate={{ scale: [1, 1.06, 1], opacity: [0.6, 0.1, 0.6] }}
+            transition={{ duration: 3.5, delay: i * 0.8, repeat: Infinity, ease: "easeInOut" }}
+          />
+        ))}
+      </div>
+
+      {/* Floating back link */}
+      <div className="fixed left-4 top-4 z-40 sm:left-6 sm:top-6">
+        <Link
+          href="/"
+          className="inline-flex items-center gap-1.5 rounded-full border border-sky-200/70 bg-white/90 px-3 py-2 text-[0.75rem] font-semibold text-sky-600 shadow-[0_4px_16px_-4px_rgba(14,165,233,0.18)] backdrop-blur-sm transition-colors hover:bg-white dark:border-slate-700 dark:bg-slate-900/80 dark:text-sky-400 dark:hover:bg-slate-900"
+        >
+          <Heart className="h-3.5 w-3.5 fill-current" aria-hidden />
+          <span>Wishing Cards</span>
+        </Link>
+      </div>
+
+      {/* Floating theme toggle */}
+      <div className="fixed right-4 top-4 z-40 sm:right-6 sm:top-6">
+        <ThemeToggle variant="floating" />
+      </div>
+
+      <AnimatePresence mode="wait">
+        {!isCelebrating ? (
+          <motion.section
+            key="birthday-question"
+            initial={{ opacity: 0, y: 32, scale: 0.96, filter: "blur(10px)" }}
+            animate={{ opacity: 1, y: 0, scale: 1, filter: "blur(0px)" }}
+            exit={{
+              opacity: 0,
+              scale: 1.04,
+              y: -16,
+              transition: { duration: 0.35, ease: EASE_OUT },
+            }}
+            transition={{ duration: 0.52, ease: EASE }}
+            className="relative w-full max-w-xl overflow-hidden rounded-2xl border border-sky-200/70 bg-white px-5 py-6 shadow-[0_4px_24px_-4px_rgba(14,165,233,0.12),0_0_1px_0_rgba(0,0,0,0.04)] sm:rounded-3xl sm:px-8 sm:py-8 dark:border-sky-900/40 dark:bg-slate-900"
+          >
+            <div className="pointer-events-none absolute inset-0">
+              <div className="absolute -left-20 -top-20 h-64 w-64 rounded-full bg-sky-100/60 blur-3xl dark:bg-sky-900/30" />
+              <div className="absolute -bottom-24 -right-24 h-64 w-64 rounded-full bg-blue-100/50 blur-3xl dark:bg-blue-900/30" />
+            </div>
+
+            <div className="relative z-10 flex flex-col items-center gap-4 text-center sm:gap-5">
+              <motion.p
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.32, delay: 0.08, ease: EASE_OUT }}
+                className="text-[11px] font-semibold uppercase tracking-[0.3em] text-sky-500 dark:text-sky-400"
+              >
+                {eyebrow}
+              </motion.p>
+
+              <AnimatedHeadline
+                words={headlineWords}
+                className="max-w-lg bg-linear-to-br from-sky-600 via-blue-500 to-sky-700 bg-clip-text text-[1.75rem] font-extrabold leading-tight tracking-tight text-transparent sm:text-4xl md:text-[2.75rem]"
+                ariaLabel={headlineWords.join(" ")}
+              />
+
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9, y: 12 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                transition={{ duration: 0.52, delay: 0.22, ease: EASE }}
+              >
+                <BirthdayCake
+                  candleCount={candleCount}
+                  blownCandles={blownCandles}
+                  onBlow={handleBlow}
+                />
+              </motion.div>
+
+              {/* Hint text updates as candles are blown */}
+              <AnimatePresence mode="wait">
+                <motion.p
+                  key={blownLeft}
+                  initial={{ opacity: 0, y: 4 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -4 }}
+                  transition={{ duration: 0.18 }}
+                  className="text-[0.8125rem] text-stone-500 dark:text-slate-400"
+                >
+                  {blownLeft === candleCount
+                    ? birthdayConfig.subtext
+                    : blownLeft === 0
+                      ? "All done! 🎉"
+                      : `${blownLeft} candle${blownLeft > 1 ? "s" : ""} left — keep going!`}
+                </motion.p>
+              </AnimatePresence>
+            </div>
+          </motion.section>
+        ) : (
+          <motion.section
+            key="birthday-success"
+            initial={{ opacity: 0, scale: 0.9, y: 24 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.5, delay: 0.15, ease: EASE }}
+            className="relative z-40 w-full max-w-xl overflow-hidden rounded-2xl border border-sky-200/70 bg-white p-5 text-center shadow-[0_4px_24px_-4px_rgba(14,165,233,0.12),0_0_1px_0_rgba(0,0,0,0.04)] sm:rounded-3xl sm:p-8 dark:border-sky-900/40 dark:bg-slate-900"
+          >
+            <div className="pointer-events-none absolute inset-0">
+              <div className="absolute inset-x-12 top-0 h-44 bg-linear-to-b from-sky-50/70 via-blue-50/40 to-transparent blur-3xl dark:from-sky-950/40" />
+            </div>
+
+            <div className="relative z-10 flex flex-col items-center gap-3 sm:gap-4">
+              <motion.div
+                initial={{ scale: 0, rotate: -15 }}
+                animate={{ scale: 1, rotate: 0 }}
+                transition={{ type: "spring", stiffness: 240, damping: 18, delay: 0.1 }}
+                className="text-6xl sm:text-7xl"
+                aria-hidden
+              >
+                🎂
+              </motion.div>
+
+              <motion.h2
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.32, delay: 0.22, ease: EASE_OUT }}
+                className="max-w-md bg-linear-to-br from-sky-600 via-blue-500 to-sky-700 bg-clip-text text-2xl font-extrabold leading-tight tracking-tight text-transparent sm:text-3xl"
+              >
+                {successHeadline}
+              </motion.h2>
+
+              <motion.p
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.32, delay: 0.32, ease: EASE_OUT }}
+                className="max-w-md text-balance text-[0.9375rem] leading-[1.6] text-stone-600 sm:text-base sm:leading-[1.65] dark:text-slate-300"
+              >
+                {replaceSenderName(birthdayConfig.success.message, senderName)}
+              </motion.p>
+
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.32, delay: 0.42 }}
+                className="flex items-center justify-center gap-2 text-sky-600 dark:text-sky-400"
+              >
+                <Avatar name={senderName} size="sm" />
+                <span className="text-[0.875rem] font-medium">
+                  {replaceSenderName(birthdayConfig.success.signature, senderName)}
+                </span>
+              </motion.div>
+
+              <motion.div
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.32, delay: 0.52, ease: EASE_OUT }}
+                className="mt-2 w-full sm:mt-3"
+              >
+                <p className="mb-2 text-[0.75rem] font-semibold uppercase tracking-wider text-stone-500 sm:text-[0.8125rem] dark:text-slate-400">
+                  Share the celebration
+                </p>
+                <div className="flex flex-col gap-3 sm:flex-row sm:justify-center sm:gap-4">
+                  <a
+                    href={whatsAppUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label="Share on WhatsApp"
+                    className="inline-flex min-h-[48px] shrink-0 touch-manipulation items-center justify-center gap-2 rounded-xl border border-green-200 bg-[#25D366]/10 px-5 py-3 text-[0.9375rem] font-semibold text-[#128C7E] transition-colors hover:bg-[#25D366]/20 active:scale-[0.98] sm:px-6"
+                  >
+                    <MessageCircle className="h-5 w-5 shrink-0" aria-hidden />
+                    <span>Share on WhatsApp</span>
+                  </a>
+                  <motion.button
+                    type="button"
+                    onClick={handleCopyLink}
+                    disabled={!shareUrl}
+                    aria-label={copied ? "Link copied" : "Copy link"}
+                    whileTap={{ scale: 0.98 }}
+                    className="inline-flex min-h-[48px] shrink-0 touch-manipulation items-center justify-center gap-2 rounded-xl border border-sky-200 bg-sky-50/80 px-5 py-3 text-[0.9375rem] font-semibold text-sky-700 transition-colors hover:bg-sky-100 active:scale-[0.98] disabled:opacity-60 sm:px-6 dark:border-sky-900/40 dark:bg-sky-950/50 dark:text-sky-300 dark:hover:bg-sky-950/70"
+                  >
+                    {copied ? (
+                      <Check className="h-5 w-5 shrink-0" aria-hidden />
+                    ) : (
+                      <Link2 className="h-5 w-5 shrink-0" aria-hidden />
+                    )}
+                    <span>{copied ? "Copied!" : "Copy link"}</span>
+                  </motion.button>
+                </div>
+              </motion.div>
+            </div>
+          </motion.section>
+        )}
+      </AnimatePresence>
+
+      {/* Footer — only after celebration */}
+      <AnimatePresence>
+        {isCelebrating && (
+          <motion.footer
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 12 }}
+            transition={{ duration: 0.4, delay: 1.5, ease: EASE }}
+            className="fixed bottom-0 left-0 right-0 z-50 w-full border-t border-sky-100/50 bg-white/85 py-2.5 backdrop-blur-sm sm:py-3 dark:border-sky-900/30 dark:bg-slate-900/85"
+          >
+            <div className="mx-auto flex max-w-xl flex-col items-center justify-center gap-1.5 px-4 text-center sm:flex-row sm:gap-2 sm:px-5">
+              <p className="text-[0.75rem] text-stone-600 sm:text-[0.8125rem] dark:text-slate-400">
+                Loved this? Make one for someone special.
+              </p>
+              <a
+                href="https://www.instagram.com/rushiii.js"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="group inline-flex min-h-[40px] touch-manipulation items-center justify-center gap-1.5 rounded-full border border-sky-200/60 bg-linear-to-r from-sky-500 via-blue-500 to-sky-600 px-4 py-2 text-[0.8125rem] font-semibold text-white shadow-[0_2px_8px_-2px_rgba(14,165,233,0.25)] transition-all duration-200 hover:scale-105 active:scale-[0.98] sm:min-h-[42px] sm:px-5 sm:py-2.5 sm:text-sm"
+              >
+                <Instagram className="h-4 w-4 shrink-0" aria-hidden />
+                <span className="whitespace-nowrap">DM me on Instagram</span>
+                <Heart className="h-3.5 w-3.5 shrink-0 fill-current" aria-hidden />
+              </a>
+            </div>
+          </motion.footer>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
