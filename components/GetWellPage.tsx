@@ -15,7 +15,20 @@ import { AnimatedHeadline } from "@/components/AnimatedHeadline";
 const EASE = [0.16, 1, 0.3, 1] as const;
 const EASE_OUT = [0.4, 0, 0.2, 1] as const;
 
-type Phase = "wilted" | "healing" | "revealed";
+type Phase = "wilted" | "healing" | "glowing" | "revealed";
+
+// Healing light particles for the glowing interstitial
+const GLOW_PARTICLES = Array.from({ length: 22 }, (_, i) => ({
+  id: i,
+  x: (i * 47 + 13) % 90 + 5,
+  y: (i * 37 + 7) % 82 + 5,
+  char: i % 3 === 0 ? "✦" : i % 3 === 1 ? "·" : "○",
+  size: 10 + (i % 4) * 5,
+  color: ["#4ade80", "#86efac", "#22c55e", "#bbf7d0", "#fbbf24"][i % 5],
+  baseOpacity: 0.2 + (i % 5) * 0.08,
+  delay: (i % 9) * 0.28,
+  duration: 2.0 + (i % 5) * 0.5,
+}));
 
 // ─── helpers ──────────────────────────────────────────────────────────────────
 
@@ -138,43 +151,38 @@ export function GetWellPage() {
     if (typeof window !== "undefined") setShareUrl(window.location.href);
   }, []);
 
-  const handleHeal = useCallback(async () => {
+  const handleHeal = useCallback(() => {
     if (phase !== "wilted") return;
     setPhase("healing");
-
-    // Confetti — green healing shower
-    setTimeout(async () => {
-      const { default: confetti } = await import("canvas-confetti");
-      const colors = [
-        "#22c55e",
-        "#4ade80",
-        "#86efac",
-        "#16a34a",
-        "#bbf7d0",
-        "#fbbf24",
-        "#ffffff",
-      ];
-      confetti({
-        particleCount: 70,
-        spread: 90,
-        origin: { x: 0.5, y: 0.38 },
-        colors,
-        startVelocity: 48,
-      });
-      setTimeout(() => {
-        confetti({
-          particleCount: 35,
-          spread: 65,
-          angle: 125,
-          origin: { x: 0.65, y: 0.5 },
-          colors,
-          startVelocity: 35,
-        });
-      }, 220);
-    }, 600);
-
-    setTimeout(() => setPhase("revealed"), 1100);
+    // Let the sunflower finish healing, then step to glowing interstitial
+    setTimeout(() => setPhase("glowing"), 1100);
   }, [phase]);
+
+  const handleSendHealing = useCallback(async () => {
+    const { default: confetti } = await import("canvas-confetti");
+    const colors = [
+      "#22c55e", "#4ade80", "#86efac",
+      "#16a34a", "#bbf7d0", "#fbbf24", "#ffffff",
+    ];
+    confetti({
+      particleCount: 70,
+      spread: 90,
+      origin: { x: 0.5, y: 0.38 },
+      colors,
+      startVelocity: 48,
+    });
+    setTimeout(() => {
+      confetti({
+        particleCount: 35,
+        spread: 65,
+        angle: 125,
+        origin: { x: 0.65, y: 0.5 },
+        colors,
+        startVelocity: 35,
+      });
+    }, 220);
+    setPhase("revealed");
+  }, []);
 
   const handleCopyLink = useCallback(() => {
     if (!shareUrl) return;
@@ -212,6 +220,57 @@ export function GetWellPage() {
         ))}
       </div>
 
+      {/* ── Glowing interstitial overlay (fixed, outside AnimatePresence) ── */}
+      <AnimatePresence>
+        {phase === "glowing" && (
+          <>
+            <motion.div
+              key="glow-backdrop"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.5 }}
+              className="pointer-events-none fixed inset-0 z-20 bg-gradient-to-b from-green-950/96 via-emerald-950/90 to-lime-950/96"
+            />
+            <motion.div
+              key="glow-particles"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.55, delay: 0.1 }}
+              className="pointer-events-none fixed inset-0 z-20 overflow-hidden"
+            >
+              {GLOW_PARTICLES.map((p) => (
+                <motion.span
+                  key={p.id}
+                  className="absolute select-none"
+                  style={{
+                    left: `${p.x}%`,
+                    top: `${p.y}%`,
+                    fontSize: p.size,
+                    color: p.color,
+                    opacity: p.baseOpacity,
+                  }}
+                  animate={{
+                    opacity: [p.baseOpacity * 0.3, p.baseOpacity, p.baseOpacity * 0.3],
+                    scale: [0.85, 1.15, 0.85],
+                    y: [-6, 6, -6],
+                  }}
+                  transition={{
+                    duration: p.duration,
+                    delay: p.delay,
+                    repeat: Infinity,
+                    ease: "easeInOut",
+                  }}
+                >
+                  {p.char}
+                </motion.span>
+              ))}
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
       {/* Back link */}
       <div className="fixed left-4 top-4 z-40 sm:left-6 sm:top-6">
         <Link
@@ -229,7 +288,8 @@ export function GetWellPage() {
       </div>
 
       <AnimatePresence mode="wait">
-        {phase !== "revealed" ? (
+        {/* ── Phase 1 + 2: Sunflower (wilted → healing) ── */}
+        {(phase === "wilted" || phase === "healing") && (
           <motion.div
             key="flower-view"
             initial={{ opacity: 0, y: 32, filter: "blur(10px)" }}
@@ -316,8 +376,80 @@ export function GetWellPage() {
               )}
             </AnimatePresence>
           </motion.div>
-        ) : (
-          /* ── Success card ── */
+        )}
+
+        {/* ── Phase 3: Glowing interstitial ── */}
+        {phase === "glowing" && (
+          <motion.div
+            key="glowing-screen"
+            initial={{ opacity: 0, scale: 0.92 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 1.06, transition: { duration: 0.3 } }}
+            transition={{ duration: 0.45, delay: 0.2, ease: EASE }}
+            className="relative z-30 flex flex-col items-center gap-7 text-center"
+          >
+            {/* Pulsing sunflower */}
+            <div className="relative">
+              <motion.div
+                className="pointer-events-none absolute left-1/2 top-1/2 h-28 w-28 -translate-x-1/2 -translate-y-1/2 rounded-full bg-yellow-400/25 blur-2xl"
+                animate={{ scale: [1, 1.6, 1], opacity: [0.5, 0.15, 0.5] }}
+                transition={{ duration: 2.4, repeat: Infinity, ease: "easeInOut" }}
+              />
+              <motion.div
+                animate={{ scale: [1, 1.07, 1], rotate: [-3, 3, -3] }}
+                transition={{ duration: 2.8, repeat: Infinity, ease: "easeInOut" }}
+                className="text-[5.5rem] leading-none sm:text-[6.5rem]"
+              >
+                🌻
+              </motion.div>
+            </div>
+
+            {/* Text */}
+            <div className="flex flex-col gap-1.5">
+              <motion.p
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.42, delay: 0.35, ease: EASE_OUT }}
+                className="text-lg font-medium text-green-200"
+              >
+                The healing is on its way...
+              </motion.p>
+              <motion.p
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.42, delay: 0.7, ease: EASE_OUT }}
+                className="text-2xl font-extrabold tracking-tight text-white sm:text-3xl"
+              >
+                ...sending all my warmth 🌱
+              </motion.p>
+            </div>
+
+            {/* Send button */}
+            <motion.div
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.38, delay: 1.3, ease: EASE }}
+            >
+              <motion.button
+                type="button"
+                onClick={handleSendHealing}
+                whileHover={{
+                  scale: 1.06,
+                  boxShadow: "0 0 32px 8px rgba(74,222,128,0.2)",
+                }}
+                whileTap={{ scale: 0.96 }}
+                transition={{ type: "spring", stiffness: 280, damping: 20 }}
+                className="inline-flex min-h-[54px] touch-manipulation items-center gap-2.5 rounded-full border border-green-300/40 bg-white/10 px-10 py-4 text-base font-semibold text-white backdrop-blur-sm transition-colors hover:bg-white/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-300/60 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent"
+              >
+                <span>Send your love</span>
+                <span aria-hidden>🌻</span>
+              </motion.button>
+            </motion.div>
+          </motion.div>
+        )}
+
+        {/* ── Phase 4: Success card ── */}
+        {phase === "revealed" && (
           <motion.section
             key="getwell-success"
             initial={{ opacity: 0, scale: 0.9, y: 24 }}
