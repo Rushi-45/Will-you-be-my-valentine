@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { GraduationPage } from "@/components/GraduationPage";
+import { OccasionSeoCopy } from "@/components/OccasionSeoCopy";
+import { occasionSeoContent } from "@/config/seo-content";
 
 type PageProps = {
   searchParams: Promise<{ name?: string; sender?: string; year?: string }> | { name?: string; sender?: string; year?: string };
@@ -39,8 +41,11 @@ export async function generateMetadata({ searchParams }: PageProps): Promise<Met
 
 export default function GraduationRoute() {
   return (
-    <Suspense fallback={null}>
-      <GraduationPage />
-    </Suspense>
+    <>
+      <Suspense fallback={null}>
+        <GraduationPage />
+      </Suspense>
+      <OccasionSeoCopy content={occasionSeoContent.graduation} />
+    </>
   );
 }

@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { GetWellPage } from "@/components/GetWellPage";
+import { OccasionSeoCopy } from "@/components/OccasionSeoCopy";
+import { occasionSeoContent } from "@/config/seo-content";
 
 type PageProps = {
   searchParams: Promise<{ name?: string; sender?: string }> | { name?: string; sender?: string };
@@ -35,8 +37,11 @@ export async function generateMetadata({ searchParams }: PageProps): Promise<Met
 
 export default function GetWellRoute() {
   return (
-    <Suspense fallback={null}>
-      <GetWellPage />
-    </Suspense>
+    <>
+      <Suspense fallback={null}>
+        <GetWellPage />
+      </Suspense>
+      <OccasionSeoCopy content={occasionSeoContent["get-well"]} />
+    </>
   );
 }

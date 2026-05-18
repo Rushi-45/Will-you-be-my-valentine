@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { AnniversaryPage } from "@/components/AnniversaryPage";
+import { OccasionSeoCopy } from "@/components/OccasionSeoCopy";
+import { occasionSeoContent } from "@/config/seo-content";
 
 type PageProps = {
   searchParams: Promise<{ name?: string; sender?: string; years?: string }> | { name?: string; sender?: string; years?: string };
@@ -44,8 +46,11 @@ export async function generateMetadata({ searchParams }: PageProps): Promise<Met
 
 export default function AnniversaryRoute() {
   return (
-    <Suspense fallback={null}>
-      <AnniversaryPage />
-    </Suspense>
+    <>
+      <Suspense fallback={null}>
+        <AnniversaryPage />
+      </Suspense>
+      <OccasionSeoCopy content={occasionSeoContent.anniversary} />
+    </>
   );
 }

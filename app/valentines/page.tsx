@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import { ValentinePage } from "@/components/ValentinePage";
 import { valentineConfig } from "@/config/valentine";
+import { OccasionSeoCopy } from "@/components/OccasionSeoCopy";
+import { occasionSeoContent } from "@/config/seo-content";
 
 type PageProps = {
   searchParams: Promise<{ name?: string }> | { name?: string };
@@ -36,8 +38,11 @@ export async function generateMetadata({
 
 export default function ValentinesRoute() {
   return (
-    <Suspense fallback={null}>
-      <ValentinePage />
-    </Suspense>
+    <>
+      <Suspense fallback={null}>
+        <ValentinePage />
+      </Suspense>
+      <OccasionSeoCopy content={occasionSeoContent.valentines} />
+    </>
   );
 }

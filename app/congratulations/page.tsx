@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { CongratulationsPage } from "@/components/CongratulationsPage";
+import { OccasionSeoCopy } from "@/components/OccasionSeoCopy";
+import { occasionSeoContent } from "@/config/seo-content";
 
 type PageProps = {
   searchParams: Promise<{ name?: string; sender?: string }> | { name?: string; sender?: string };
@@ -35,8 +37,11 @@ export async function generateMetadata({ searchParams }: PageProps): Promise<Met
 
 export default function CongratulationsRoute() {
   return (
-    <Suspense fallback={null}>
-      <CongratulationsPage />
-    </Suspense>
+    <>
+      <Suspense fallback={null}>
+        <CongratulationsPage />
+      </Suspense>
+      <OccasionSeoCopy content={occasionSeoContent.congratulations} />
+    </>
   );
 }
