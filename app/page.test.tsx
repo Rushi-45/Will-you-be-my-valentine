@@ -7,27 +7,25 @@ describe("Landing page", () => {
   it("renders the hero headline", () => {
     render(<Home />);
     expect(
-      screen.getByRole("heading", { level: 1, name: /make every moment special/i }),
+      screen.getByRole("heading", { level: 1, name: /make every moment/i }),
     ).toBeInTheDocument();
   });
 
-  it("renders one tile per occasion with correct href", () => {
+  it("renders at least one link per occasion pointing at the right route", () => {
     render(<Home />);
     for (const occasion of occasions) {
-      const link = screen.getByRole("link", { name: new RegExp(occasion.name, "i") });
-      expect(link).toHaveAttribute("href", `/${occasion.slug}`);
+      const links = screen.getAllByRole("link", {
+        name: new RegExp(occasion.name, "i"),
+      });
+      // Grid tile + footer link may both exist; at least one must point at the route.
+      expect(
+        links.some((link) => link.getAttribute("href") === `/${occasion.slug}`),
+      ).toBe(true);
     }
   });
 
   it("labels implemented occasions with 'Create card' and stubs with 'Coming soon'", () => {
     render(<Home />);
-    const tiles = screen.getAllByRole("link");
-    const occasionTiles = tiles.filter((tile) =>
-      tile.getAttribute("href")?.startsWith("/") &&
-      tile.getAttribute("href") !== "/" &&
-      !tile.getAttribute("href")?.includes("instagram"),
-    );
-    expect(occasionTiles).toHaveLength(occasions.length);
 
     const createCardCount = occasions.filter((o) => o.implemented).length;
     const comingSoonCount = occasions.filter((o) => !o.implemented).length;

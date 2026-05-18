@@ -1,5 +1,10 @@
 @import "tailwindcss";
 
+/* Make Tailwind's `dark:` variant respond to the .dark class on <html>
+   (set by hooks/useTheme.ts + the inline bootstrap in app/layout.tsx).
+   Without this, `dark:` only fires on prefers-color-scheme: dark. */
+@custom-variant dark (&:where(.dark, .dark *));
+
 :root {
   --background: #fdf2f8;
   --foreground: #292524;
@@ -36,7 +41,7 @@
 }
 
 .dark {
-  --background: #09060a;
+  --background: #050507;
   --foreground: #fafaf9;
   --surface: #1e1e2e;
   --primary: #f472b6;
@@ -60,6 +65,97 @@ html {
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* Theme toggle: smooth crossfade between light/dark, with a clip-path
+   reveal animated from the toggle button (see hooks/useTheme.ts). */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+
+::view-transition-old(root) {
+  z-index: 1;
+}
+
+::view-transition-new(root) {
+  z-index: 2;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation: fade 0.01s linear;
+  }
+}
+
+@keyframes fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Gentle vertical bob — used by the hero scroll-cue chevron. */
+@keyframes slow-bob {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(6px);
+  }
+}
+
+.animate-slow-bob {
+  animation: slow-bob 2.4s cubic-bezier(0.45, 0, 0.55, 1) infinite;
+}
+
+/* Soft heartbeat — used by the hero chip heart icon. */
+@keyframes heart-pulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  35% {
+    transform: scale(1.15);
+  }
+  60% {
+    transform: scale(1.02);
+  }
+  75% {
+    transform: scale(1.08);
+  }
+}
+
+.animate-heart-pulse {
+  animation: heart-pulse 1.8s ease-in-out infinite;
+  transform-origin: center;
+}
+
+/* One-shot diagonal shimmer for the live occasion tile. Runs once after the
+   tile reveals, then returns to its -translate-x-full resting state so the
+   hover sweep still works. */
+@keyframes shimmer-once {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(120%);
+  }
+}
+
+.animate-shimmer-once {
+  animation: shimmer-once 1.5s cubic-bezier(0.22, 1, 0.36, 1) 0.7s 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-slow-bob,
+  .animate-heart-pulse,
+  .animate-shimmer-once {
+    animation: none;
+  }
+}
+
 body {
   min-height: 100vh;
   margin: 0;
@@ -79,6 +175,17 @@ body {
   color: var(--foreground);
   font-family: var(--font-geist-sans), system-ui, sans-serif;
   letter-spacing: 0.01em;
+}
+
+.dark body {
+  background:
+    radial-gradient(circle at 0% 0%, rgba(190, 18, 60, 0.12), transparent 50%),
+    radial-gradient(
+      circle at 100% 100%,
+      rgba(244, 63, 94, 0.08),
+      transparent 50%
+    ),
+    var(--background);
 }
 
 main {

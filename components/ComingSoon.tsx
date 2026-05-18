@@ -12,7 +12,7 @@ export function ComingSoon({ occasion }: Props) {
 
   return (
     <main className="relative flex min-h-screen flex-col items-center justify-center bg-stone-50 px-4 pt-20 pb-16 text-stone-800 dark:bg-slate-950 dark:text-slate-100">
-      <Header />
+      <Header label={occasion.name} />
       <div
         className={`pointer-events-none absolute inset-0 bg-linear-to-br ${occasion.bgGradient} opacity-60 dark:opacity-20`}
       />

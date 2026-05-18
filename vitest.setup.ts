@@ -12,3 +12,21 @@ if (typeof window !== "undefined" && !window.matchMedia) {
     dispatchEvent: () => false,
   });
 }
+
+if (typeof window !== "undefined" && !("IntersectionObserver" in window)) {
+  class IntersectionObserverMock {
+    observe() {}
+    unobserve() {}
+    disconnect() {}
+    takeRecords(): IntersectionObserverEntry[] {
+      return [];
+    }
+    root = null;
+    rootMargin = "";
+    thresholds = [];
+  }
+  (window as unknown as { IntersectionObserver: typeof IntersectionObserverMock })
+    .IntersectionObserver = IntersectionObserverMock;
+  (globalThis as unknown as { IntersectionObserver: typeof IntersectionObserverMock })
+    .IntersectionObserver = IntersectionObserverMock;
+}
