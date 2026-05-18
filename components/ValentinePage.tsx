@@ -26,16 +26,20 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 const MusicToggle = memo(function MusicToggle({
   musicOn,
   onToggle,
+  footerVisible,
 }: {
   musicOn: boolean;
   onToggle: () => void;
+  footerVisible: boolean;
 }) {
   return (
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ delay: 1 }}
-      className="fixed bottom-5 right-5 z-50 rounded-full shadow-[0_4px_16px_-4px_rgba(190,18,60,0.15)] sm:bottom-6 sm:right-6"
+      className={`fixed right-5 z-50 rounded-full shadow-[0_4px_16px_-4px_rgba(190,18,60,0.15)] transition-[bottom] duration-300 sm:right-6 ${
+        footerVisible ? "bottom-[4.5rem] sm:bottom-20" : "bottom-5 sm:bottom-6"
+      }`}
     >
       <Icon
         icon={musicOn ? Volume2 : VolumeX}
@@ -136,25 +140,26 @@ export function ValentinePage() {
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const noMovedAtRef = useRef<number>(0);
+  const hintShownRef = useRef(false);
   const musicSrc = valentineConfig.backgroundMusic ?? null;
 
   useEffect(() => {
     if (typeof window !== "undefined") setShareUrl(window.location.href);
   }, []);
 
-  // V8: show a one-time music hint 3s after mount if music is available
+  // V8: show the music hint once, 3s after mount — never again after music is enabled
   useEffect(() => {
-    if (!musicSrc || musicOn) {
-      setShowMusicHint(false);
-      return;
-    }
-    const showTimer = setTimeout(() => setShowMusicHint(true), 3000);
+    if (!musicSrc || hintShownRef.current) return;
+    const showTimer = setTimeout(() => {
+      hintShownRef.current = true;
+      setShowMusicHint(true);
+    }, 3000);
     const hideTimer = setTimeout(() => setShowMusicHint(false), 6200);
     return () => {
       clearTimeout(showTimer);
       clearTimeout(hideTimer);
     };
-  }, [musicSrc, musicOn]);
+  }, [musicSrc]);
 
   const headlineLine1 = useMemo(
     () =>
@@ -183,16 +188,13 @@ export function ValentinePage() {
 
   const sadMessage = useMemo(() => getSadMessage(noClickCount), [noClickCount]);
 
-  // V5: escape range grows with each rejection, clamped to viewport
+  // V5: escape range grows with each rejection, clamped to card bounds (max-w-xl = 576px)
   const handleNoMove = useCallback(() => {
-    const vw = typeof window !== "undefined" ? window.innerWidth : 640;
-    const isNarrow = vw < 640;
-    const baseX = isNarrow ? 140 : 140;
-    const baseY = isNarrow ? 80 : 80;
-    const rangeX = Math.min(baseX + noClickCount * 25, 280);
-    const rangeY = Math.min(baseY + noClickCount * 15, 180);
-    // Clamp so the button (≈140px wide) can't escape beyond the viewport edge
-    const maxSafeX = Math.max(vw / 2 - 90, 40);
+    const rangeX = Math.min(140 + noClickCount * 25, 280);
+    const rangeY = Math.min(80 + noClickCount * 15, 180);
+    // Card is max-w-xl (288px half). Button is ~140px wide (70px half).
+    // Cap at 210px so the button stays within the card's overflow-hidden boundary.
+    const maxSafeX = 210;
     const rawX = (Math.random() - 0.5) * rangeX;
     const rawY = (Math.random() - 0.5) * rangeY;
     setNoOffsets({
@@ -389,7 +391,7 @@ export function ValentinePage() {
       </div>
 
       {showMusicToggle && (
-        <MusicToggle musicOn={musicOn} onToggle={toggleMusic} />
+        <MusicToggle musicOn={musicOn} onToggle={toggleMusic} footerVisible={isAccepted} />
       )}
 
       {/* V8: Music hint tooltip */}
