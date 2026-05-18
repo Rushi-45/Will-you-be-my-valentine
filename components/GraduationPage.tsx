@@ -7,7 +7,7 @@ import {
   AnimatePresence,
   useAnimationControls,
 } from "framer-motion";
-import { Check, Heart, Instagram, Link2, MessageCircle } from "lucide-react";
+import { Check, Heart, Link2, MessageCircle } from "lucide-react";
 import Link from "next/link";
 import { graduationConfig, replaceSenderName } from "@/config/graduation";
 import { Avatar } from "@/components/Avatar";
@@ -594,22 +594,21 @@ export function GraduationPage() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 12 }}
             transition={{ duration: 0.4, delay: 1.5, ease: EASE }}
-            className="fixed bottom-0 left-0 right-0 z-50 w-full border-t border-amber-100/50 bg-white/85 py-2.5 backdrop-blur-sm sm:py-3 dark:border-amber-900/30 dark:bg-slate-900/85"
+            className="fixed bottom-0 left-0 right-0 z-50 w-full border-t border-amber-200/40 bg-linear-to-r from-white/90 via-amber-50/90 to-white/90 py-3 backdrop-blur-sm sm:py-3.5 dark:border-amber-900/30 dark:from-slate-900/90 dark:via-amber-950/60 dark:to-slate-900/90"
           >
-            <div className="mx-auto flex max-w-xl flex-col items-center justify-center gap-1.5 px-4 text-center sm:flex-row sm:gap-2 sm:px-5">
-              <p className="text-[0.75rem] text-stone-600 sm:text-[0.8125rem] dark:text-slate-400">
-                Loved this? Make one for someone special.
+            <div className="mx-auto flex max-w-xl flex-col items-center justify-center gap-2 px-4 text-center sm:flex-row sm:gap-3 sm:px-5">
+              <p className="text-[0.75rem] text-stone-500 sm:text-[0.8125rem] dark:text-slate-400">
+                Want to make one for someone special?
               </p>
-              <a
-                href="https://www.instagram.com/rushiii.js"
+              <Link
+                href="/"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="group inline-flex min-h-[40px] touch-manipulation items-center justify-center gap-1.5 rounded-full border border-amber-200/60 bg-linear-to-r from-amber-500 via-orange-500 to-amber-600 px-4 py-2 text-[0.8125rem] font-semibold text-white shadow-[0_2px_8px_-2px_rgba(245,158,11,0.25)] transition-all duration-200 hover:scale-105 active:scale-[0.98] sm:min-h-[42px] sm:px-5 sm:py-2.5 sm:text-sm"
+                className="group inline-flex min-h-[40px] touch-manipulation items-center justify-center gap-1.5 rounded-full bg-linear-to-r from-rose-500 via-pink-500 to-rose-600 px-4 py-2 text-[0.8125rem] font-semibold text-white shadow-[0_2px_10px_-2px_rgba(190,18,60,0.3)] transition-all duration-200 hover:scale-105 hover:shadow-[0_4px_14px_-2px_rgba(190,18,60,0.4)] hover:brightness-105 active:scale-[0.98] sm:min-h-[42px] sm:px-5 sm:text-sm"
               >
-                <Instagram className="h-4 w-4 shrink-0" aria-hidden />
-                <span className="whitespace-nowrap">DM me on Instagram</span>
-                <Heart className="h-3.5 w-3.5 shrink-0 fill-current" aria-hidden />
-              </a>
+                <Heart className="h-3.5 w-3.5 shrink-0 fill-current transition-transform duration-200 group-hover:scale-110 sm:h-4 sm:w-4" aria-hidden />
+                <span className="whitespace-nowrap">Create your own card</span>
+              </Link>
             </div>
           </motion.footer>
         )}
