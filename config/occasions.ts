@@ -54,7 +54,7 @@ export const occasions: readonly Occasion[] = [
     icon: Gift,
     gradient: "from-purple-500 via-fuchsia-500 to-purple-600",
     bgGradient: "from-purple-50 to-fuchsia-50",
-    implemented: false,
+    implemented: true,
   },
   {
     name: "Graduation",
