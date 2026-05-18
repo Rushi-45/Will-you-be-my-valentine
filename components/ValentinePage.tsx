@@ -22,7 +22,6 @@ import { Avatar } from "@/components/Avatar";
 import { Icon } from "@/components/ui/Icon";
 import { AnimatedHeadline } from "@/components/AnimatedHeadline";
 import { ThemeToggle } from "@/components/ThemeToggle";
-import { PhotoCarousel } from "@/components/PhotoCarousel";
 
 const MusicToggle = memo(function MusicToggle({
   musicOn,
@@ -807,21 +806,6 @@ export function ValentinePage() {
               </motion.div>
             </div>
           </motion.section>
-        )}
-      </AnimatePresence>
-
-      {/* Photo gallery — slides in below the success card after acceptance */}
-      <AnimatePresence>
-        {isAccepted && valentineConfig.gallery.length > 0 && (
-          <motion.div
-            initial={{ opacity: 0, y: 28 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.52, delay: 2.0, ease: MOTION.ease }}
-            className="mt-5 w-full max-w-xl px-4 pb-28 sm:px-5"
-          >
-            <PhotoCarousel images={valentineConfig.gallery} />
-          </motion.div>
         )}
       </AnimatePresence>
 
