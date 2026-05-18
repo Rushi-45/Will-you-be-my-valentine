@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { motion, AnimatePresence, useAnimationControls } from "framer-motion";
-import { Check, Heart, Instagram, Link2, MessageCircle } from "lucide-react";
+import { Check, Heart, Link2, MessageCircle } from "lucide-react";
 import Link from "next/link";
 import { congratulationsConfig, replaceSenderName } from "@/config/congratulations";
 import { Avatar } from "@/components/Avatar";
@@ -15,7 +15,19 @@ import { AnimatedHeadline } from "@/components/AnimatedHeadline";
 const EASE = [0.16, 1, 0.3, 1] as const;
 const EASE_OUT = [0.4, 0, 0.2, 1] as const;
 
-type Phase = "ready" | "firing" | "revealed";
+type Phase = "ready" | "firing" | "celebrating" | "revealed";
+
+const CELEB_STARS = Array.from({ length: 24 }, (_, i) => ({
+  id: i,
+  char: (["★", "✦", "·", "✦", "★"] as const)[i % 5],
+  x: (i * 47 + 13) % 90 + 5,
+  y: (i * 37 + 7) % 82 + 5,
+  color: (["#818cf8", "#a78bfa", "#c084fc", "#e879f9", "#fbbf24", "#6366f1"] as const)[i % 6],
+  delay: (i * 0.13) % 1.8,
+  duration: 2.2 + (i * 0.19) % 1.6,
+  floatY: 18 + (i * 11) % 28,
+  size: 14 + (i * 7) % 16,
+}));
 
 // ─── helpers ──────────────────────────────────────────────────────────────────
 
@@ -233,7 +245,10 @@ export function CongratulationsPage() {
       transition: { duration: 0.38, ease: EASE },
     });
 
-    // Confetti burst
+    setPhase("celebrating");
+  }, [phase, popperControls]);
+
+  const handleCelebrate = useCallback(async () => {
     const { default: confetti } = await import("canvas-confetti");
     const colors = [
       "#7c3aed", "#a855f7", "#c4b5fd",
@@ -267,8 +282,8 @@ export function CongratulationsPage() {
       });
     }, 320);
 
-    setTimeout(() => setPhase("revealed"), 420);
-  }, [phase, popperControls]);
+    setPhase("revealed");
+  }, []);
 
   const handleCopyLink = useCallback(() => {
     if (!shareUrl) return;
@@ -322,8 +337,53 @@ export function CongratulationsPage() {
         <ThemeToggle variant="floating" />
       </div>
 
+      {/* ── Celebrating backdrop + star field (outside mode="wait" to avoid stacking-context breakage) ── */}
+      <AnimatePresence>
+        {phase === "celebrating" && (
+          <>
+            <motion.div
+              key="celeb-backdrop"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.45, ease: EASE_OUT }}
+              className="fixed inset-0 z-20 bg-linear-to-br from-indigo-950/96 via-violet-950/92 to-indigo-950/96"
+              aria-hidden
+            />
+            {CELEB_STARS.map((s) => (
+              <motion.span
+                key={s.id}
+                initial={{ opacity: 0 }}
+                animate={{
+                  opacity: [0, s.id % 3 === 0 ? 0.9 : 0.6, 0, s.id % 3 === 0 ? 0.9 : 0.6],
+                  y: [`${s.y}vh`, `${s.y - s.floatY * 0.5}vh`, `${s.y}vh`],
+                }}
+                exit={{ opacity: 0 }}
+                transition={{
+                  duration: s.duration,
+                  delay: s.delay,
+                  repeat: Infinity,
+                  ease: "easeInOut",
+                }}
+                className="pointer-events-none fixed z-20 select-none"
+                style={{
+                  left: `${s.x}vw`,
+                  top: `${s.y}vh`,
+                  color: s.color,
+                  fontSize: s.size,
+                  textShadow: `0 0 8px ${s.color}99`,
+                }}
+                aria-hidden
+              >
+                {s.char}
+              </motion.span>
+            ))}
+          </>
+        )}
+      </AnimatePresence>
+
       <AnimatePresence mode="wait">
-        {phase !== "revealed" ? (
+        {(phase === "ready" || phase === "firing") ? (
           <motion.div
             key="popper-view"
             initial={{ opacity: 0, y: 32, filter: "blur(10px)" }}
@@ -382,6 +442,66 @@ export function CongratulationsPage() {
               )}
             </AnimatePresence>
           </motion.div>
+        ) : phase === "celebrating" ? (
+          /* ── Celebrating interstitial ── */
+          <motion.div
+            key="celebrating-view"
+            initial={{ opacity: 0, scale: 0.94 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 1.04, transition: { duration: 0.25, ease: EASE_OUT } }}
+            transition={{ duration: 0.45, ease: EASE }}
+            className="relative z-30 flex flex-col items-center gap-6 text-center"
+          >
+            {/* Pulsing 🎉 with glow */}
+            <div className="relative flex items-center justify-center">
+              <motion.div
+                animate={{ scale: [1, 1.5, 1], opacity: [0.25, 0.08, 0.25] }}
+                transition={{ duration: 2.2, repeat: Infinity, ease: "easeInOut" }}
+                className="absolute h-32 w-32 rounded-full bg-violet-500/30 blur-2xl"
+                aria-hidden
+              />
+              <motion.span
+                animate={{ scale: [1, 1.1, 1] }}
+                transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}
+                className="relative text-[5.5rem] leading-none drop-shadow-lg sm:text-[6.5rem]"
+                aria-hidden
+              >
+                🎉
+              </motion.span>
+            </div>
+
+            <div className="flex flex-col items-center gap-1.5">
+              <motion.p
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.25, duration: 0.4, ease: EASE_OUT }}
+                className="text-lg font-semibold text-violet-200 sm:text-xl"
+              >
+                You set your sights on something...
+              </motion.p>
+              <motion.p
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.42, duration: 0.4, ease: EASE_OUT }}
+                className="text-base text-indigo-300/80 sm:text-lg"
+              >
+                ...and you went and did it 🎉
+              </motion.p>
+            </div>
+
+            <motion.button
+              type="button"
+              onClick={handleCelebrate}
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.6, duration: 0.4, ease: EASE_OUT }}
+              whileHover={{ scale: 1.04 }}
+              whileTap={{ scale: 0.97 }}
+              className="min-h-[52px] touch-manipulation rounded-2xl border border-violet-300/40 bg-white/10 px-8 py-3.5 text-base font-semibold text-white backdrop-blur-sm transition-colors hover:bg-white/15 focus-visible:outline-none"
+            >
+              Celebrate! 🎉
+            </motion.button>
+          </motion.div>
         ) : (
           /* ── Success card ── */
           <motion.section
@@ -390,37 +510,75 @@ export function CongratulationsPage() {
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.5, delay: 0.1, ease: EASE }}
-            className="relative z-40 w-full max-w-xl overflow-hidden rounded-2xl border border-indigo-200/70 bg-white p-5 text-center shadow-[0_4px_24px_-4px_rgba(99,102,241,0.14),0_0_1px_0_rgba(0,0,0,0.04)] sm:rounded-3xl sm:p-8 dark:border-indigo-900/40 dark:bg-slate-900"
+            className="relative z-40 w-full max-w-xl overflow-hidden rounded-2xl border border-indigo-200/70 bg-white text-center shadow-[0_4px_24px_-4px_rgba(99,102,241,0.14),0_0_1px_0_rgba(0,0,0,0.04)] sm:rounded-3xl dark:border-indigo-900/40 dark:bg-slate-900"
           >
-            <div className="pointer-events-none absolute inset-0">
-              <div className="absolute inset-x-12 top-0 h-44 bg-linear-to-b from-indigo-50/80 via-violet-50/40 to-transparent blur-3xl dark:from-indigo-950/50" />
+            {/* Gradient hero banner */}
+            <div className="relative overflow-hidden bg-linear-to-br from-indigo-500 via-violet-500 to-purple-500 px-5 pb-8 pt-7 sm:px-8 sm:pb-9 sm:pt-8">
+              <div className="pointer-events-none absolute inset-0 opacity-[0.12] [background-image:radial-gradient(circle,white_1.5px,transparent_1.5px)] [background-size:22px_22px]" aria-hidden />
+              <div className="pointer-events-none absolute left-1/2 top-1/2 h-36 w-36 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white/20 blur-3xl" aria-hidden />
+              {/* Shimmer sweep */}
+              <motion.div
+                className="pointer-events-none absolute inset-0 bg-linear-to-r from-transparent via-white/30 to-transparent"
+                initial={{ x: "-100%" }}
+                animate={{ x: "200%" }}
+                transition={{ duration: 0.85, delay: 0.3, ease: [0.4, 0, 0.2, 1] }}
+                aria-hidden
+              />
+              {/* Floating mini-particles */}
+              {Array.from({ length: 8 }, (_, i) => (
+                <motion.span
+                  key={i}
+                  className="pointer-events-none absolute select-none text-white/70"
+                  style={{
+                    left: `${(i * 53 + 17) % 80 + 10}%`,
+                    bottom: `${20 + (i * 41 + 9) % 50}%`,
+                    fontSize: `${10 + (i * 7) % 8}px`,
+                  }}
+                  animate={{ y: [0, -(20 + (i * 9) % 18), 0], opacity: [0.35, 0.7, 0.35] }}
+                  transition={{
+                    duration: 2.2 + (i * 0.31) % 1.4,
+                    delay: (i * 0.23) % 1.6,
+                    repeat: Infinity,
+                    ease: "easeInOut",
+                  }}
+                  aria-hidden
+                >
+                  {(["✦", "·", "★", "✦", "·", "★", "✦", "·"] as const)[i]}
+                </motion.span>
+              ))}
+              <div className="pointer-events-none absolute inset-x-0 bottom-0 h-8 bg-linear-to-b from-transparent to-white dark:to-slate-900" aria-hidden />
+              <div className="relative flex flex-col items-center gap-3">
+                <div className="relative flex items-center justify-center">
+                  <motion.div
+                    className="absolute h-24 w-24 rounded-full bg-white/20 blur-xl"
+                    animate={{ scale: [1, 1.5, 1], opacity: [0.6, 0.12, 0.6] }}
+                    transition={{ duration: 2.4, repeat: Infinity, ease: "easeInOut" }}
+                    aria-hidden
+                  />
+                  <motion.div
+                    initial={{ scale: 0, rotate: -20, y: 12 }}
+                    animate={{ scale: 1, rotate: 0, y: 0 }}
+                    transition={{ type: "spring", stiffness: 260, damping: 16, delay: 0.15 }}
+                    className="relative text-5xl drop-shadow-[0_4px_8px_rgba(0,0,0,0.18)] sm:text-6xl"
+                    aria-hidden
+                  >
+                    🎉
+                  </motion.div>
+                </div>
+                <AnimatedHeadline
+                  words={congratulationsConfig.success.headline.split(" ")}
+                  className="text-xl font-extrabold leading-tight tracking-tight text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.2)] sm:text-2xl"
+                  ariaLabel={congratulationsConfig.success.headline}
+                />
+              </div>
+            </div>
+
+            {/* Ambient background blobs */}
+            <div className="pointer-events-none absolute inset-0 z-0">
               <div className="absolute -bottom-20 -right-20 h-52 w-52 rounded-full bg-violet-100/40 blur-3xl dark:bg-violet-900/20" />
             </div>
 
-            <div className="relative z-10 flex flex-col items-center gap-3 sm:gap-4">
-              <motion.div
-                initial={{ scale: 0, rotate: -15, y: 20 }}
-                animate={{ scale: 1, rotate: 0, y: 0 }}
-                transition={{
-                  type: "spring",
-                  stiffness: 240,
-                  damping: 18,
-                  delay: 0.1,
-                }}
-                className="text-6xl sm:text-7xl"
-                aria-hidden
-              >
-                🎉
-              </motion.div>
-
-              <motion.h2
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.32, delay: 0.22, ease: EASE_OUT }}
-                className="max-w-md bg-linear-to-br from-indigo-600 via-violet-500 to-indigo-700 bg-clip-text text-2xl font-extrabold leading-tight tracking-tight text-transparent sm:text-3xl"
-              >
-                {congratulationsConfig.success.headline}
-              </motion.h2>
+            <div className="relative z-10 flex flex-col items-center gap-3 px-5 pb-5 pt-3 sm:gap-4 sm:px-8 sm:pb-8 sm:pt-4">
 
               <motion.p
                 initial={{ opacity: 0, y: 8 }}
@@ -460,8 +618,19 @@ export function CongratulationsPage() {
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.32, delay: 0.6, ease: EASE_OUT }}
-                className="mt-1 w-full sm:mt-2"
+                className="mt-0 w-full"
               >
+                <motion.div
+                  initial={{ opacity: 0, scaleX: 0 }}
+                  animate={{ opacity: 1, scaleX: 1 }}
+                  transition={{ duration: 0.5, delay: 0.55, ease: EASE_OUT }}
+                  className="mb-3 flex w-full items-center gap-3"
+                  aria-hidden
+                >
+                  <div className="h-px flex-1 bg-stone-200/80 dark:bg-slate-700/50" />
+                  <span className="text-xs text-stone-400 dark:text-slate-600">✦</span>
+                  <div className="h-px flex-1 bg-stone-200/80 dark:bg-slate-700/50" />
+                </motion.div>
                 <p className="mb-2 text-[0.75rem] font-semibold uppercase tracking-wider text-stone-500 sm:text-[0.8125rem] dark:text-slate-400">
                   Share the celebration
                 </p>
@@ -506,22 +675,21 @@ export function CongratulationsPage() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 12 }}
             transition={{ duration: 0.4, delay: 1.5, ease: EASE }}
-            className="fixed bottom-0 left-0 right-0 z-50 w-full border-t border-indigo-100/50 bg-white/85 py-2.5 backdrop-blur-sm sm:py-3 dark:border-indigo-900/30 dark:bg-slate-900/85"
+            className="fixed bottom-0 left-0 right-0 z-50 w-full border-t border-indigo-200/40 bg-linear-to-r from-white/90 via-indigo-50/90 to-white/90 py-3 backdrop-blur-sm sm:py-3.5 dark:border-indigo-900/30 dark:from-slate-900/90 dark:via-indigo-950/60 dark:to-slate-900/90"
           >
-            <div className="mx-auto flex max-w-xl flex-col items-center justify-center gap-1.5 px-4 text-center sm:flex-row sm:gap-2 sm:px-5">
-              <p className="text-[0.75rem] text-stone-600 sm:text-[0.8125rem] dark:text-slate-400">
-                Loved this? Make one for someone special.
+            <div className="mx-auto flex max-w-xl flex-col items-center justify-center gap-2 px-4 text-center sm:flex-row sm:gap-3 sm:px-5">
+              <p className="text-[0.75rem] text-stone-500 sm:text-[0.8125rem] dark:text-slate-400">
+                Want to make one for someone special?
               </p>
-              <a
-                href="https://www.instagram.com/rushiii.js"
+              <Link
+                href="/"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="group inline-flex min-h-[40px] touch-manipulation items-center justify-center gap-1.5 rounded-full border border-indigo-200/60 bg-linear-to-r from-indigo-500 via-violet-500 to-indigo-600 px-4 py-2 text-[0.8125rem] font-semibold text-white shadow-[0_2px_8px_-2px_rgba(99,102,241,0.25)] transition-all duration-200 hover:scale-105 active:scale-[0.98] sm:min-h-[42px] sm:px-5 sm:py-2.5 sm:text-sm"
+                className="group inline-flex min-h-[40px] touch-manipulation items-center justify-center gap-1.5 rounded-full bg-linear-to-r from-rose-500 via-pink-500 to-rose-600 px-4 py-2 text-[0.8125rem] font-semibold text-white shadow-[0_2px_10px_-2px_rgba(190,18,60,0.3)] transition-all duration-200 hover:scale-105 hover:shadow-[0_4px_14px_-2px_rgba(190,18,60,0.4)] hover:brightness-105 active:scale-[0.98] sm:min-h-[42px] sm:px-5 sm:text-sm"
               >
-                <Instagram className="h-4 w-4 shrink-0" aria-hidden />
-                <span className="whitespace-nowrap">DM me on Instagram</span>
-                <Heart className="h-3.5 w-3.5 shrink-0 fill-current" aria-hidden />
-              </a>
+                <Heart className="h-3.5 w-3.5 shrink-0 fill-current transition-transform duration-200 group-hover:scale-110 sm:h-4 sm:w-4" aria-hidden />
+                <span className="whitespace-nowrap">Create your own card</span>
+              </Link>
             </div>
           </motion.footer>
         )}

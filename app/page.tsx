@@ -113,18 +113,10 @@ export default function Home() {
             Browse occasions
           </span>
           <h2 className="text-3xl font-extrabold tracking-tight text-stone-800 dark:text-slate-100 sm:text-4xl">
-            One card live · six more on the way
+            Every moment deserves a card
           </h2>
           <p className="max-w-xl text-balance text-sm text-stone-600 dark:text-slate-400 sm:text-base">
-            Each card is config-driven. Personalize with{" "}
-            <code className="rounded bg-stone-100 px-1.5 py-0.5 font-mono text-[0.8125rem] text-rose-600 dark:bg-slate-800 dark:text-rose-300">
-              ?name=
-            </code>{" "}
-            and{" "}
-            <code className="rounded bg-stone-100 px-1.5 py-0.5 font-mono text-[0.8125rem] text-rose-600 dark:bg-slate-800 dark:text-rose-300">
-              ?sender=
-            </code>
-            .
+            Seven handcrafted occasions, each personalized with a name and built to share.
           </p>
         </div>
         <OccasionGrid />

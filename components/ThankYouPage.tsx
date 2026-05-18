@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { Check, Heart, Instagram, Link2, MessageCircle } from "lucide-react";
+import { Check, Heart, Link2, MessageCircle } from "lucide-react";
 import Link from "next/link";
 import { thankYouConfig, replaceSenderName } from "@/config/thank-you";
 import { Avatar } from "@/components/Avatar";
@@ -15,9 +15,22 @@ import { AnimatedHeadline } from "@/components/AnimatedHeadline";
 const EASE = [0.16, 1, 0.3, 1] as const;
 const EASE_OUT = [0.4, 0, 0.2, 1] as const;
 
-type Phase = "waiting" | "blooming" | "revealed";
+type Phase = "waiting" | "blooming" | "sending" | "revealed";
 
 const PETAL_ANGLES = [0, 60, 120, 180, 240, 300];
+
+// Drifting petals for the sending interstitial
+const DRIFT_PETALS = Array.from({ length: 22 }, (_, i) => ({
+  id: i,
+  x: (i * 47 + 13) % 90 + 5,
+  y: (i * 37 + 7) % 82 + 5,
+  char: i % 2 === 0 ? "✿" : "❋",
+  size: 11 + (i % 4) * 4,
+  color: ["#34d399", "#6ee7b7", "#10b981", "#a7f3d0", "#059669"][i % 5],
+  baseOpacity: 0.2 + (i % 5) * 0.07,
+  delay: (i % 9) * 0.28,
+  duration: 2.2 + (i % 5) * 0.5,
+}));
 
 // ─── helpers ──────────────────────────────────────────────────────────────────
 
@@ -87,42 +100,38 @@ export function ThankYouPage() {
     if (typeof window !== "undefined") setShareUrl(window.location.href);
   }, []);
 
-  const handleBloom = useCallback(async () => {
+  const handleBloom = useCallback(() => {
     if (phase !== "waiting") return;
     setPhase("blooming");
-
-    setTimeout(async () => {
-      const { default: confetti } = await import("canvas-confetti");
-      const colors = [
-        "#10b981",
-        "#34d399",
-        "#6ee7b7",
-        "#059669",
-        "#a7f3d0",
-        "#ffffff",
-        "#fbbf24",
-      ];
-      confetti({
-        particleCount: 80,
-        spread: 100,
-        origin: { x: 0.5, y: 0.4 },
-        colors,
-        startVelocity: 50,
-      });
-      setTimeout(() => {
-        confetti({
-          particleCount: 40,
-          spread: 70,
-          angle: 110,
-          origin: { x: 0.7, y: 0.5 },
-          colors,
-          startVelocity: 38,
-        });
-      }, 180);
-    }, 500);
-
-    setTimeout(() => setPhase("revealed"), 950);
+    // Let the petals open, then step to the sending interstitial
+    setTimeout(() => setPhase("sending"), 950);
   }, [phase]);
+
+  const handleSendThanks = useCallback(async () => {
+    const { default: confetti } = await import("canvas-confetti");
+    const colors = [
+      "#10b981", "#34d399", "#6ee7b7",
+      "#059669", "#a7f3d0", "#ffffff", "#fbbf24",
+    ];
+    confetti({
+      particleCount: 80,
+      spread: 100,
+      origin: { x: 0.5, y: 0.4 },
+      colors,
+      startVelocity: 50,
+    });
+    setTimeout(() => {
+      confetti({
+        particleCount: 40,
+        spread: 70,
+        angle: 110,
+        origin: { x: 0.7, y: 0.5 },
+        colors,
+        startVelocity: 38,
+      });
+    }, 180);
+    setPhase("revealed");
+  }, []);
 
   const handleCopyLink = useCallback(() => {
     if (!shareUrl) return;
@@ -160,6 +169,57 @@ export function ThankYouPage() {
         ))}
       </div>
 
+      {/* ── Sending overlay + drifting petals (fixed, outside AnimatePresence) ── */}
+      <AnimatePresence>
+        {phase === "sending" && (
+          <>
+            <motion.div
+              key="send-backdrop"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.5 }}
+              className="pointer-events-none fixed inset-0 z-20 bg-gradient-to-b from-emerald-950/96 via-teal-950/92 to-emerald-950/96"
+            />
+            <motion.div
+              key="petal-field"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.55, delay: 0.1 }}
+              className="pointer-events-none fixed inset-0 z-20 overflow-hidden"
+            >
+              {DRIFT_PETALS.map((p) => (
+                <motion.span
+                  key={p.id}
+                  className="absolute select-none"
+                  style={{
+                    left: `${p.x}%`,
+                    top: `${p.y}%`,
+                    fontSize: p.size,
+                    color: p.color,
+                    opacity: p.baseOpacity,
+                  }}
+                  animate={{
+                    y: [-10, 6, -10],
+                    rotate: [-8, 8, -8],
+                    opacity: [p.baseOpacity * 0.4, p.baseOpacity, p.baseOpacity * 0.4],
+                  }}
+                  transition={{
+                    duration: p.duration,
+                    delay: p.delay,
+                    repeat: Infinity,
+                    ease: "easeInOut",
+                  }}
+                >
+                  {p.char}
+                </motion.span>
+              ))}
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
       {/* Back link */}
       <div className="fixed left-4 top-4 z-40 sm:left-6 sm:top-6">
         <Link
@@ -177,7 +237,8 @@ export function ThankYouPage() {
       </div>
 
       <AnimatePresence mode="wait">
-        {phase !== "revealed" ? (
+        {/* ── Phase 1 + 2: Flower (waiting → blooming) ── */}
+        {(phase === "waiting" || phase === "blooming") && (
           <motion.div
             key="flower-view"
             initial={{ opacity: 0, y: 32, filter: "blur(10px)" }}
@@ -267,46 +328,155 @@ export function ThankYouPage() {
               )}
             </AnimatePresence>
           </motion.div>
-        ) : (
-          /* ── Success card ── */
+        )}
+
+        {/* ── Phase 3: Sending interstitial ── */}
+        {phase === "sending" && (
+          <motion.div
+            key="sending-screen"
+            initial={{ opacity: 0, scale: 0.92 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 1.06, transition: { duration: 0.3 } }}
+            transition={{ duration: 0.45, delay: 0.2, ease: EASE }}
+            className="relative z-30 flex flex-col items-center gap-7 text-center"
+          >
+            {/* Pulsing flower */}
+            <div className="relative">
+              <motion.div
+                className="pointer-events-none absolute left-1/2 top-1/2 h-28 w-28 -translate-x-1/2 -translate-y-1/2 rounded-full bg-emerald-400/20 blur-2xl"
+                animate={{ scale: [1, 1.5, 1], opacity: [0.5, 0.15, 0.5] }}
+                transition={{ duration: 2.2, repeat: Infinity, ease: "easeInOut" }}
+              />
+              <motion.div
+                animate={{ scale: [1, 1.07, 1], rotate: [-5, 5, -5] }}
+                transition={{ duration: 2.8, repeat: Infinity, ease: "easeInOut" }}
+                className="text-[5.5rem] leading-none sm:text-[6.5rem]"
+              >
+                🌸
+              </motion.div>
+            </div>
+
+            {/* Text */}
+            <div className="flex flex-col gap-1.5">
+              <motion.p
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.42, delay: 0.35, ease: EASE_OUT }}
+                className="text-lg font-medium text-emerald-200"
+              >
+                They showed up when it mattered...
+              </motion.p>
+              <motion.p
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.42, delay: 0.7, ease: EASE_OUT }}
+                className="text-2xl font-extrabold tracking-tight text-white sm:text-3xl"
+              >
+                ...now let them know you see it 🌸
+              </motion.p>
+            </div>
+
+            {/* Send button */}
+            <motion.div
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.38, delay: 1.3, ease: EASE }}
+            >
+              <motion.button
+                type="button"
+                onClick={handleSendThanks}
+                whileHover={{
+                  scale: 1.06,
+                  boxShadow: "0 0 32px 8px rgba(52,211,153,0.2)",
+                }}
+                whileTap={{ scale: 0.96 }}
+                transition={{ type: "spring", stiffness: 280, damping: 20 }}
+                className="inline-flex min-h-[54px] touch-manipulation items-center gap-2.5 rounded-full border border-emerald-300/40 bg-white/10 px-10 py-4 text-base font-semibold text-white backdrop-blur-sm transition-colors hover:bg-white/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300/60 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent"
+              >
+                <span>Let them know</span>
+                <span aria-hidden>🌸</span>
+              </motion.button>
+            </motion.div>
+          </motion.div>
+        )}
+
+        {/* ── Phase 4: Success card ── */}
+        {phase === "revealed" && (
           <motion.section
             key="thankyou-success"
             initial={{ opacity: 0, scale: 0.9, y: 24 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.5, delay: 0.1, ease: EASE }}
-            className="relative z-40 w-full max-w-xl overflow-hidden rounded-2xl border border-emerald-200/70 bg-white p-5 text-center shadow-[0_4px_24px_-4px_rgba(16,185,129,0.14),0_0_1px_0_rgba(0,0,0,0.04)] sm:rounded-3xl sm:p-8 dark:border-emerald-900/40 dark:bg-slate-900"
+            className="relative z-40 w-full max-w-xl overflow-hidden rounded-2xl border border-emerald-200/70 bg-white text-center shadow-[0_4px_24px_-4px_rgba(16,185,129,0.14),0_0_1px_0_rgba(0,0,0,0.04)] sm:rounded-3xl dark:border-emerald-900/40 dark:bg-slate-900"
           >
-            <div className="pointer-events-none absolute inset-0">
-              <div className="absolute inset-x-12 top-0 h-44 bg-linear-to-b from-emerald-50/80 via-teal-50/40 to-transparent blur-3xl dark:from-emerald-950/50" />
+            {/* Gradient hero banner */}
+            <div className="relative overflow-hidden bg-linear-to-br from-emerald-400 via-teal-400 to-green-400 px-5 pb-8 pt-7 sm:px-8 sm:pb-9 sm:pt-8">
+              <div className="pointer-events-none absolute inset-0 opacity-[0.12] [background-image:radial-gradient(circle,white_1.5px,transparent_1.5px)] [background-size:22px_22px]" aria-hidden />
+              <div className="pointer-events-none absolute left-1/2 top-1/2 h-36 w-36 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white/20 blur-3xl" aria-hidden />
+              {/* Shimmer sweep */}
+              <motion.div
+                className="pointer-events-none absolute inset-0 bg-linear-to-r from-transparent via-white/30 to-transparent"
+                initial={{ x: "-100%" }}
+                animate={{ x: "200%" }}
+                transition={{ duration: 0.85, delay: 0.3, ease: [0.4, 0, 0.2, 1] }}
+                aria-hidden
+              />
+              {/* Floating mini-particles */}
+              {Array.from({ length: 8 }, (_, i) => (
+                <motion.span
+                  key={i}
+                  className="pointer-events-none absolute select-none text-white/70"
+                  style={{
+                    left: `${(i * 53 + 17) % 80 + 10}%`,
+                    bottom: `${20 + (i * 41 + 9) % 50}%`,
+                    fontSize: `${10 + (i * 7) % 8}px`,
+                  }}
+                  animate={{ y: [0, -(20 + (i * 9) % 18), 0], opacity: [0.35, 0.7, 0.35] }}
+                  transition={{
+                    duration: 2.2 + (i * 0.31) % 1.4,
+                    delay: (i * 0.23) % 1.6,
+                    repeat: Infinity,
+                    ease: "easeInOut",
+                  }}
+                  aria-hidden
+                >
+                  {(["✦", "·", "★", "✦", "·", "★", "✦", "·"] as const)[i]}
+                </motion.span>
+              ))}
+              <div className="pointer-events-none absolute inset-x-0 bottom-0 h-8 bg-linear-to-b from-transparent to-white dark:to-slate-900" aria-hidden />
+              <div className="relative flex flex-col items-center gap-3">
+                <div className="relative flex items-center justify-center">
+                  <motion.div
+                    className="absolute h-24 w-24 rounded-full bg-white/20 blur-xl"
+                    animate={{ scale: [1, 1.5, 1], opacity: [0.6, 0.12, 0.6] }}
+                    transition={{ duration: 2.4, repeat: Infinity, ease: "easeInOut" }}
+                    aria-hidden
+                  />
+                  <motion.div
+                    initial={{ scale: 0, rotate: -20, y: 12 }}
+                    animate={{ scale: 1, rotate: 0, y: 0 }}
+                    transition={{ type: "spring", stiffness: 260, damping: 16, delay: 0.15 }}
+                    className="relative text-5xl drop-shadow-[0_4px_8px_rgba(0,0,0,0.18)] sm:text-6xl"
+                    aria-hidden
+                  >
+                    🌸
+                  </motion.div>
+                </div>
+                <AnimatedHeadline
+                  words={thankYouConfig.success.headline.split(" ")}
+                  className="text-xl font-extrabold leading-tight tracking-tight text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.2)] sm:text-2xl"
+                  ariaLabel={thankYouConfig.success.headline}
+                />
+              </div>
+            </div>
+
+            {/* Ambient background blobs */}
+            <div className="pointer-events-none absolute inset-0 z-0">
               <div className="absolute -bottom-20 -right-20 h-52 w-52 rounded-full bg-teal-100/40 blur-3xl dark:bg-teal-900/20" />
             </div>
 
-            <div className="relative z-10 flex flex-col items-center gap-3 sm:gap-4">
-              {/* Flower emoji */}
-              <motion.div
-                initial={{ scale: 0, rotate: -15, y: 20 }}
-                animate={{ scale: 1, rotate: 0, y: 0 }}
-                transition={{
-                  type: "spring",
-                  stiffness: 240,
-                  damping: 18,
-                  delay: 0.1,
-                }}
-                className="text-6xl sm:text-7xl"
-                aria-hidden
-              >
-                🌸
-              </motion.div>
-
-              <motion.h2
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.32, delay: 0.22, ease: EASE_OUT }}
-                className="max-w-md bg-linear-to-br from-emerald-600 via-teal-500 to-emerald-700 bg-clip-text text-2xl font-extrabold leading-tight tracking-tight text-transparent sm:text-3xl"
-              >
-                {thankYouConfig.success.headline}
-              </motion.h2>
+            <div className="relative z-10 flex flex-col items-center gap-3 px-5 pb-5 pt-3 sm:gap-4 sm:px-8 sm:pb-8 sm:pt-4">
 
               <motion.p
                 initial={{ opacity: 0, y: 8 }}
@@ -346,8 +516,19 @@ export function ThankYouPage() {
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.32, delay: 0.6, ease: EASE_OUT }}
-                className="mt-1 w-full sm:mt-2"
+                className="mt-0 w-full"
               >
+                <motion.div
+                  initial={{ opacity: 0, scaleX: 0 }}
+                  animate={{ opacity: 1, scaleX: 1 }}
+                  transition={{ duration: 0.5, delay: 0.55, ease: EASE_OUT }}
+                  className="mb-3 flex w-full items-center gap-3"
+                  aria-hidden
+                >
+                  <div className="h-px flex-1 bg-stone-200/80 dark:bg-slate-700/50" />
+                  <span className="text-xs text-stone-400 dark:text-slate-600">✦</span>
+                  <div className="h-px flex-1 bg-stone-200/80 dark:bg-slate-700/50" />
+                </motion.div>
                 <p className="mb-2 text-[0.75rem] font-semibold uppercase tracking-wider text-stone-500 sm:text-[0.8125rem] dark:text-slate-400">
                   Share the gratitude
                 </p>
@@ -392,22 +573,21 @@ export function ThankYouPage() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 12 }}
             transition={{ duration: 0.4, delay: 1.5, ease: EASE }}
-            className="fixed bottom-0 left-0 right-0 z-50 w-full border-t border-emerald-100/50 bg-white/85 py-2.5 backdrop-blur-sm sm:py-3 dark:border-emerald-900/30 dark:bg-slate-900/85"
+            className="fixed bottom-0 left-0 right-0 z-50 w-full border-t border-emerald-200/40 bg-linear-to-r from-white/90 via-emerald-50/90 to-white/90 py-3 backdrop-blur-sm sm:py-3.5 dark:border-emerald-900/30 dark:from-slate-900/90 dark:via-emerald-950/60 dark:to-slate-900/90"
           >
-            <div className="mx-auto flex max-w-xl flex-col items-center justify-center gap-1.5 px-4 text-center sm:flex-row sm:gap-2 sm:px-5">
-              <p className="text-[0.75rem] text-stone-600 sm:text-[0.8125rem] dark:text-slate-400">
-                Loved this? Make one for someone special.
+            <div className="mx-auto flex max-w-xl flex-col items-center justify-center gap-2 px-4 text-center sm:flex-row sm:gap-3 sm:px-5">
+              <p className="text-[0.75rem] text-stone-500 sm:text-[0.8125rem] dark:text-slate-400">
+                Want to make one for someone special?
               </p>
-              <a
-                href="https://www.instagram.com/rushiii.js"
+              <Link
+                href="/"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="group inline-flex min-h-[40px] touch-manipulation items-center justify-center gap-1.5 rounded-full border border-emerald-200/60 bg-linear-to-r from-emerald-500 via-teal-500 to-emerald-600 px-4 py-2 text-[0.8125rem] font-semibold text-white shadow-[0_2px_8px_-2px_rgba(16,185,129,0.25)] transition-all duration-200 hover:scale-105 active:scale-[0.98] sm:min-h-[42px] sm:px-5 sm:py-2.5 sm:text-sm"
+                className="group inline-flex min-h-[40px] touch-manipulation items-center justify-center gap-1.5 rounded-full bg-linear-to-r from-rose-500 via-pink-500 to-rose-600 px-4 py-2 text-[0.8125rem] font-semibold text-white shadow-[0_2px_10px_-2px_rgba(190,18,60,0.3)] transition-all duration-200 hover:scale-105 hover:shadow-[0_4px_14px_-2px_rgba(190,18,60,0.4)] hover:brightness-105 active:scale-[0.98] sm:min-h-[42px] sm:px-5 sm:text-sm"
               >
-                <Instagram className="h-4 w-4 shrink-0" aria-hidden />
-                <span className="whitespace-nowrap">DM me on Instagram</span>
-                <Heart className="h-3.5 w-3.5 shrink-0 fill-current" aria-hidden />
-              </a>
+                <Heart className="h-3.5 w-3.5 shrink-0 fill-current transition-transform duration-200 group-hover:scale-110 sm:h-4 sm:w-4" aria-hidden />
+                <span className="whitespace-nowrap">Create your own card</span>
+              </Link>
             </div>
           </motion.footer>
         )}
