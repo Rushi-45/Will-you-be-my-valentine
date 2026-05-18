@@ -408,38 +408,37 @@ export function ThankYouPage() {
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.5, delay: 0.1, ease: EASE }}
-            className="relative z-40 w-full max-w-xl overflow-hidden rounded-2xl border border-emerald-200/70 bg-white p-5 text-center shadow-[0_4px_24px_-4px_rgba(16,185,129,0.14),0_0_1px_0_rgba(0,0,0,0.04)] sm:rounded-3xl sm:p-8 dark:border-emerald-900/40 dark:bg-slate-900"
+            className="relative z-40 w-full max-w-xl overflow-hidden rounded-2xl border border-emerald-200/70 bg-white text-center shadow-[0_4px_24px_-4px_rgba(16,185,129,0.14),0_0_1px_0_rgba(0,0,0,0.04)] sm:rounded-3xl dark:border-emerald-900/40 dark:bg-slate-900"
           >
-            <div className="pointer-events-none absolute inset-0">
-              <div className="absolute inset-x-12 top-0 h-44 bg-linear-to-b from-emerald-50/80 via-teal-50/40 to-transparent blur-3xl dark:from-emerald-950/50" />
+            {/* Gradient hero banner */}
+            <div className="relative overflow-hidden bg-linear-to-br from-emerald-400 via-teal-400 to-green-400 px-5 pb-8 pt-7 sm:px-8 sm:pb-9 sm:pt-8">
+              <div className="pointer-events-none absolute inset-0 opacity-[0.12] [background-image:radial-gradient(circle,white_1.5px,transparent_1.5px)] [background-size:22px_22px]" aria-hidden />
+              <div className="pointer-events-none absolute left-1/2 top-1/2 h-36 w-36 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white/20 blur-3xl" aria-hidden />
+              <div className="pointer-events-none absolute inset-x-0 bottom-0 h-8 bg-linear-to-b from-transparent to-white dark:to-slate-900" aria-hidden />
+              <div className="relative flex flex-col items-center gap-3">
+                <motion.div
+                  initial={{ scale: 0, rotate: -20, y: 12 }}
+                  animate={{ scale: 1, rotate: 0, y: 0 }}
+                  transition={{ type: "spring", stiffness: 260, damping: 16, delay: 0.15 }}
+                  className="text-5xl drop-shadow-[0_4px_8px_rgba(0,0,0,0.18)] sm:text-6xl"
+                  aria-hidden
+                >
+                  🌸
+                </motion.div>
+                <AnimatedHeadline
+                  words={thankYouConfig.success.headline.split(" ")}
+                  className="text-xl font-extrabold leading-tight tracking-tight text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.2)] sm:text-2xl"
+                  ariaLabel={thankYouConfig.success.headline}
+                />
+              </div>
+            </div>
+
+            {/* Ambient background blobs */}
+            <div className="pointer-events-none absolute inset-0 z-0">
               <div className="absolute -bottom-20 -right-20 h-52 w-52 rounded-full bg-teal-100/40 blur-3xl dark:bg-teal-900/20" />
             </div>
 
-            <div className="relative z-10 flex flex-col items-center gap-3 sm:gap-4">
-              {/* Flower emoji */}
-              <motion.div
-                initial={{ scale: 0, rotate: -15, y: 20 }}
-                animate={{ scale: 1, rotate: 0, y: 0 }}
-                transition={{
-                  type: "spring",
-                  stiffness: 240,
-                  damping: 18,
-                  delay: 0.1,
-                }}
-                className="text-6xl sm:text-7xl"
-                aria-hidden
-              >
-                🌸
-              </motion.div>
-
-              <motion.h2
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.32, delay: 0.22, ease: EASE_OUT }}
-                className="max-w-md bg-linear-to-br from-emerald-600 via-teal-500 to-emerald-700 bg-clip-text text-2xl font-extrabold leading-tight tracking-tight text-transparent sm:text-3xl"
-              >
-                {thankYouConfig.success.headline}
-              </motion.h2>
+            <div className="relative z-10 flex flex-col items-center gap-3 px-5 pb-5 pt-3 sm:gap-4 sm:px-8 sm:pb-8 sm:pt-4">
 
               <motion.p
                 initial={{ opacity: 0, y: 8 }}
