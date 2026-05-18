@@ -15,7 +15,19 @@ import { AnimatedHeadline } from "@/components/AnimatedHeadline";
 const EASE = [0.16, 1, 0.3, 1] as const;
 const EASE_OUT = [0.4, 0, 0.2, 1] as const;
 
-type Phase = "ready" | "firing" | "revealed";
+type Phase = "ready" | "firing" | "celebrating" | "revealed";
+
+const CELEB_STARS = Array.from({ length: 24 }, (_, i) => ({
+  id: i,
+  char: (["★", "✦", "·", "✦", "★"] as const)[i % 5],
+  x: (i * 47 + 13) % 90 + 5,
+  y: (i * 37 + 7) % 82 + 5,
+  color: (["#818cf8", "#a78bfa", "#c084fc", "#e879f9", "#fbbf24", "#6366f1"] as const)[i % 6],
+  delay: (i * 0.13) % 1.8,
+  duration: 2.2 + (i * 0.19) % 1.6,
+  floatY: 18 + (i * 11) % 28,
+  size: 14 + (i * 7) % 16,
+}));
 
 // ─── helpers ──────────────────────────────────────────────────────────────────
 
@@ -233,7 +245,10 @@ export function CongratulationsPage() {
       transition: { duration: 0.38, ease: EASE },
     });
 
-    // Confetti burst
+    setPhase("celebrating");
+  }, [phase, popperControls]);
+
+  const handleCelebrate = useCallback(async () => {
     const { default: confetti } = await import("canvas-confetti");
     const colors = [
       "#7c3aed", "#a855f7", "#c4b5fd",
@@ -267,8 +282,8 @@ export function CongratulationsPage() {
       });
     }, 320);
 
-    setTimeout(() => setPhase("revealed"), 420);
-  }, [phase, popperControls]);
+    setPhase("revealed");
+  }, []);
 
   const handleCopyLink = useCallback(() => {
     if (!shareUrl) return;
@@ -322,8 +337,53 @@ export function CongratulationsPage() {
         <ThemeToggle variant="floating" />
       </div>
 
+      {/* ── Celebrating backdrop + star field (outside mode="wait" to avoid stacking-context breakage) ── */}
+      <AnimatePresence>
+        {phase === "celebrating" && (
+          <>
+            <motion.div
+              key="celeb-backdrop"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.45, ease: EASE_OUT }}
+              className="fixed inset-0 z-20 bg-linear-to-br from-indigo-950/96 via-violet-950/92 to-indigo-950/96"
+              aria-hidden
+            />
+            {CELEB_STARS.map((s) => (
+              <motion.span
+                key={s.id}
+                initial={{ opacity: 0 }}
+                animate={{
+                  opacity: [0, s.id % 3 === 0 ? 0.9 : 0.6, 0, s.id % 3 === 0 ? 0.9 : 0.6],
+                  y: [`${s.y}vh`, `${s.y - s.floatY * 0.5}vh`, `${s.y}vh`],
+                }}
+                exit={{ opacity: 0 }}
+                transition={{
+                  duration: s.duration,
+                  delay: s.delay,
+                  repeat: Infinity,
+                  ease: "easeInOut",
+                }}
+                className="pointer-events-none fixed z-20 select-none"
+                style={{
+                  left: `${s.x}vw`,
+                  top: `${s.y}vh`,
+                  color: s.color,
+                  fontSize: s.size,
+                  textShadow: `0 0 8px ${s.color}99`,
+                }}
+                aria-hidden
+              >
+                {s.char}
+              </motion.span>
+            ))}
+          </>
+        )}
+      </AnimatePresence>
+
       <AnimatePresence mode="wait">
-        {phase !== "revealed" ? (
+        {(phase === "ready" || phase === "firing") ? (
           <motion.div
             key="popper-view"
             initial={{ opacity: 0, y: 32, filter: "blur(10px)" }}
@@ -381,6 +441,66 @@ export function CongratulationsPage() {
                 </motion.p>
               )}
             </AnimatePresence>
+          </motion.div>
+        ) : phase === "celebrating" ? (
+          /* ── Celebrating interstitial ── */
+          <motion.div
+            key="celebrating-view"
+            initial={{ opacity: 0, scale: 0.94 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 1.04, transition: { duration: 0.25, ease: EASE_OUT } }}
+            transition={{ duration: 0.45, ease: EASE }}
+            className="relative z-30 flex flex-col items-center gap-6 text-center"
+          >
+            {/* Pulsing 🎉 with glow */}
+            <div className="relative flex items-center justify-center">
+              <motion.div
+                animate={{ scale: [1, 1.5, 1], opacity: [0.25, 0.08, 0.25] }}
+                transition={{ duration: 2.2, repeat: Infinity, ease: "easeInOut" }}
+                className="absolute h-32 w-32 rounded-full bg-violet-500/30 blur-2xl"
+                aria-hidden
+              />
+              <motion.span
+                animate={{ scale: [1, 1.1, 1] }}
+                transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}
+                className="relative text-[5.5rem] leading-none drop-shadow-lg sm:text-[6.5rem]"
+                aria-hidden
+              >
+                🎉
+              </motion.span>
+            </div>
+
+            <div className="flex flex-col items-center gap-1.5">
+              <motion.p
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.25, duration: 0.4, ease: EASE_OUT }}
+                className="text-lg font-semibold text-violet-200 sm:text-xl"
+              >
+                Time to celebrate...
+              </motion.p>
+              <motion.p
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.42, duration: 0.4, ease: EASE_OUT }}
+                className="text-base text-indigo-300/80 sm:text-lg"
+              >
+                ...make some noise! 🎊
+              </motion.p>
+            </div>
+
+            <motion.button
+              type="button"
+              onClick={handleCelebrate}
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.6, duration: 0.4, ease: EASE_OUT }}
+              whileHover={{ scale: 1.04 }}
+              whileTap={{ scale: 0.97 }}
+              className="min-h-[52px] touch-manipulation rounded-2xl border border-violet-300/40 bg-white/10 px-8 py-3.5 text-base font-semibold text-white backdrop-blur-sm transition-colors hover:bg-white/15 focus-visible:outline-none"
+            >
+              Celebrate! 🎉
+            </motion.button>
           </motion.div>
         ) : (
           /* ── Success card ── */
