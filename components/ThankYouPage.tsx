@@ -414,17 +414,55 @@ export function ThankYouPage() {
             <div className="relative overflow-hidden bg-linear-to-br from-emerald-400 via-teal-400 to-green-400 px-5 pb-8 pt-7 sm:px-8 sm:pb-9 sm:pt-8">
               <div className="pointer-events-none absolute inset-0 opacity-[0.12] [background-image:radial-gradient(circle,white_1.5px,transparent_1.5px)] [background-size:22px_22px]" aria-hidden />
               <div className="pointer-events-none absolute left-1/2 top-1/2 h-36 w-36 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white/20 blur-3xl" aria-hidden />
-              <div className="pointer-events-none absolute inset-x-0 bottom-0 h-8 bg-linear-to-b from-transparent to-white dark:to-slate-900" aria-hidden />
-              <div className="relative flex flex-col items-center gap-3">
-                <motion.div
-                  initial={{ scale: 0, rotate: -20, y: 12 }}
-                  animate={{ scale: 1, rotate: 0, y: 0 }}
-                  transition={{ type: "spring", stiffness: 260, damping: 16, delay: 0.15 }}
-                  className="text-5xl drop-shadow-[0_4px_8px_rgba(0,0,0,0.18)] sm:text-6xl"
+              {/* Shimmer sweep */}
+              <motion.div
+                className="pointer-events-none absolute inset-0 bg-linear-to-r from-transparent via-white/30 to-transparent"
+                initial={{ x: "-100%" }}
+                animate={{ x: "200%" }}
+                transition={{ duration: 0.85, delay: 0.3, ease: [0.4, 0, 0.2, 1] }}
+                aria-hidden
+              />
+              {/* Floating mini-particles */}
+              {Array.from({ length: 8 }, (_, i) => (
+                <motion.span
+                  key={i}
+                  className="pointer-events-none absolute select-none text-white/70"
+                  style={{
+                    left: `${(i * 53 + 17) % 80 + 10}%`,
+                    bottom: `${20 + (i * 41 + 9) % 50}%`,
+                    fontSize: `${10 + (i * 7) % 8}px`,
+                  }}
+                  animate={{ y: [0, -(20 + (i * 9) % 18), 0], opacity: [0.35, 0.7, 0.35] }}
+                  transition={{
+                    duration: 2.2 + (i * 0.31) % 1.4,
+                    delay: (i * 0.23) % 1.6,
+                    repeat: Infinity,
+                    ease: "easeInOut",
+                  }}
                   aria-hidden
                 >
-                  🌸
-                </motion.div>
+                  {(["✦", "·", "★", "✦", "·", "★", "✦", "·"] as const)[i]}
+                </motion.span>
+              ))}
+              <div className="pointer-events-none absolute inset-x-0 bottom-0 h-8 bg-linear-to-b from-transparent to-white dark:to-slate-900" aria-hidden />
+              <div className="relative flex flex-col items-center gap-3">
+                <div className="relative flex items-center justify-center">
+                  <motion.div
+                    className="absolute h-24 w-24 rounded-full bg-white/20 blur-xl"
+                    animate={{ scale: [1, 1.5, 1], opacity: [0.6, 0.12, 0.6] }}
+                    transition={{ duration: 2.4, repeat: Infinity, ease: "easeInOut" }}
+                    aria-hidden
+                  />
+                  <motion.div
+                    initial={{ scale: 0, rotate: -20, y: 12 }}
+                    animate={{ scale: 1, rotate: 0, y: 0 }}
+                    transition={{ type: "spring", stiffness: 260, damping: 16, delay: 0.15 }}
+                    className="relative text-5xl drop-shadow-[0_4px_8px_rgba(0,0,0,0.18)] sm:text-6xl"
+                    aria-hidden
+                  >
+                    🌸
+                  </motion.div>
+                </div>
                 <AnimatedHeadline
                   words={thankYouConfig.success.headline.split(" ")}
                   className="text-xl font-extrabold leading-tight tracking-tight text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.2)] sm:text-2xl"
@@ -478,8 +516,19 @@ export function ThankYouPage() {
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.32, delay: 0.6, ease: EASE_OUT }}
-                className="mt-1 w-full sm:mt-2"
+                className="mt-0 w-full"
               >
+                <motion.div
+                  initial={{ opacity: 0, scaleX: 0 }}
+                  animate={{ opacity: 1, scaleX: 1 }}
+                  transition={{ duration: 0.5, delay: 0.55, ease: EASE_OUT }}
+                  className="mb-3 flex w-full items-center gap-3"
+                  aria-hidden
+                >
+                  <div className="h-px flex-1 bg-stone-200/80 dark:bg-slate-700/50" />
+                  <span className="text-xs text-stone-400 dark:text-slate-600">✦</span>
+                  <div className="h-px flex-1 bg-stone-200/80 dark:bg-slate-700/50" />
+                </motion.div>
                 <p className="mb-2 text-[0.75rem] font-semibold uppercase tracking-wider text-stone-500 sm:text-[0.8125rem] dark:text-slate-400">
                   Share the gratitude
                 </p>
