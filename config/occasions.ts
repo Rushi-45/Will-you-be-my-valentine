@@ -90,7 +90,7 @@ export const occasions: readonly Occasion[] = [
     icon: Star,
     gradient: "from-indigo-500 via-violet-500 to-indigo-600",
     bgGradient: "from-indigo-50 to-violet-50",
-    implemented: false,
+    implemented: true,
   },
 ] as const;
 

@@ -1,0 +1,531 @@
+"use client";
+
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { motion, AnimatePresence, useAnimationControls } from "framer-motion";
+import { Check, Heart, Instagram, Link2, MessageCircle } from "lucide-react";
+import Link from "next/link";
+import { congratulationsConfig, replaceSenderName } from "@/config/congratulations";
+import { Avatar } from "@/components/Avatar";
+import { ThemeToggle } from "@/components/ThemeToggle";
+import { AnimatedHeadline } from "@/components/AnimatedHeadline";
+
+// ─── constants ────────────────────────────────────────────────────────────────
+
+const EASE = [0.16, 1, 0.3, 1] as const;
+const EASE_OUT = [0.4, 0, 0.2, 1] as const;
+
+type Phase = "ready" | "firing" | "revealed";
+
+// ─── helpers ──────────────────────────────────────────────────────────────────
+
+function capitalize(s: string) {
+  return s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
+}
+
+// ─── PartyPopperSVG ───────────────────────────────────────────────────────────
+
+function PartyPopperSVG({ fired }: { fired: boolean }) {
+  return (
+    <svg
+      viewBox="0 0 160 180"
+      fill="none"
+      className="h-52 w-44 drop-shadow-md"
+      aria-hidden
+    >
+      {/* Streamers — appear on fire */}
+      <AnimatePresence>
+        {fired && (
+          <>
+            {/* Streamer 1 — top right */}
+            <motion.path
+              d="M 105 55 Q 130 30 145 15"
+              stroke="#a855f7"
+              strokeWidth="3"
+              strokeLinecap="round"
+              initial={{ pathLength: 0, opacity: 0 }}
+              animate={{ pathLength: 1, opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.35, ease: EASE }}
+            />
+            {/* Streamer 2 — upper right */}
+            <motion.path
+              d="M 110 70 Q 140 55 155 42"
+              stroke="#ec4899"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              initial={{ pathLength: 0, opacity: 0 }}
+              animate={{ pathLength: 1, opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.35, delay: 0.04, ease: EASE }}
+            />
+            {/* Streamer 3 — right */}
+            <motion.path
+              d="M 112 85 Q 145 80 158 72"
+              stroke="#fbbf24"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              initial={{ pathLength: 0, opacity: 0 }}
+              animate={{ pathLength: 1, opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.35, delay: 0.08, ease: EASE }}
+            />
+            {/* Streamer 4 — upper left */}
+            <motion.path
+              d="M 95 52 Q 80 25 82 8"
+              stroke="#6366f1"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              initial={{ pathLength: 0, opacity: 0 }}
+              animate={{ pathLength: 1, opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.35, delay: 0.06, ease: EASE }}
+            />
+            {/* Confetti dots */}
+            {[
+              { cx: 132, cy: 22, r: 4, fill: "#a855f7" },
+              { cx: 148, cy: 38, r: 3, fill: "#fbbf24" },
+              { cx: 122, cy: 12, r: 3, fill: "#ec4899" },
+              { cx: 155, cy: 58, r: 3.5, fill: "#6366f1" },
+              { cx: 140, cy: 10, r: 2.5, fill: "#10b981" },
+              { cx: 72, cy: 8, r: 3, fill: "#f43f5e" },
+            ].map(({ cx, cy, r, fill }, i) => (
+              <motion.circle
+                key={i}
+                cx={cx}
+                cy={cy}
+                r={r}
+                fill={fill}
+                initial={{ scale: 0, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.28, delay: 0.1 + i * 0.03, ease: EASE }}
+              />
+            ))}
+          </>
+        )}
+      </AnimatePresence>
+
+      {/* Cone body — pointing up-right */}
+      <rect
+        x="20"
+        y="80"
+        width="90"
+        height="90"
+        rx="8"
+        fill="url(#popper-gradient)"
+        transform="rotate(-35 20 80)"
+      />
+
+      {/* Cone stripes */}
+      <rect
+        x="20"
+        y="80"
+        width="20"
+        height="90"
+        rx="4"
+        fill="rgba(255,255,255,0.18)"
+        transform="rotate(-35 20 80)"
+      />
+      <rect
+        x="50"
+        y="80"
+        width="20"
+        height="90"
+        rx="4"
+        fill="rgba(255,255,255,0.12)"
+        transform="rotate(-35 20 80)"
+      />
+
+      {/* Mouth of the popper — the opening */}
+      <motion.ellipse
+        cx="105"
+        cy="75"
+        rx="18"
+        ry="10"
+        fill={fired ? "#c4b5fd" : "#7c3aed"}
+        animate={{ ry: fired ? 14 : 10 }}
+        transition={{ duration: 0.2, ease: EASE }}
+      />
+
+      {/* Handle — at the bottom of the cone */}
+      <rect
+        x="22"
+        y="154"
+        width="14"
+        height="20"
+        rx="7"
+        fill="#5b21b6"
+      />
+
+      {/* String — droops down, gets pulled on fire */}
+      <motion.path
+        d="M 29 174 Q 18 192 22 205"
+        stroke="#7c3aed"
+        strokeWidth="2.5"
+        strokeLinecap="round"
+        fill="none"
+        animate={fired ? { d: "M 29 174 Q 22 188 24 198" } : { d: "M 29 174 Q 18 192 22 205" }}
+        transition={{ duration: 0.2, ease: EASE }}
+      />
+
+      {/* Gradient definition */}
+      <defs>
+        <linearGradient id="popper-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#7c3aed" />
+          <stop offset="50%" stopColor="#a855f7" />
+          <stop offset="100%" stopColor="#6366f1" />
+        </linearGradient>
+      </defs>
+    </svg>
+  );
+}
+
+// ─── CongratulationsPage ──────────────────────────────────────────────────────
+
+export function CongratulationsPage() {
+  const searchParams = useSearchParams();
+
+  const recipientName = useMemo(() => {
+    const raw = searchParams.get("name")?.trim();
+    return raw ? capitalize(raw) : null;
+  }, [searchParams]);
+
+  const senderName = useMemo(() => {
+    const raw = searchParams.get("sender")?.trim();
+    return raw ? capitalize(raw) : congratulationsConfig.senderName;
+  }, [searchParams]);
+
+  const headlineWords = useMemo(() => {
+    const text = recipientName
+      ? `Congratulations, ${recipientName}!`
+      : `${congratulationsConfig.headline}!`;
+    return text.split(" ");
+  }, [recipientName]);
+
+  const [phase, setPhase] = useState<Phase>("ready");
+  const [shareUrl, setShareUrl] = useState("");
+  const [copied, setCopied] = useState(false);
+
+  const popperControls = useAnimationControls();
+
+  useEffect(() => {
+    if (typeof window !== "undefined") setShareUrl(window.location.href);
+  }, []);
+
+  // Idle bob animation
+  useEffect(() => {
+    popperControls.start({
+      rotate: [-3, 3, -3],
+      y: [0, -6, 0],
+      transition: { duration: 2.8, repeat: Infinity, ease: "easeInOut" },
+    });
+  }, [popperControls]);
+
+  const handlePop = useCallback(async () => {
+    if (phase !== "ready") return;
+    setPhase("firing");
+
+    // Quick recoil animation
+    await popperControls.start({
+      scale: [1, 1.15, 0.95, 1],
+      rotate: [-3, 8, -2, 0],
+      transition: { duration: 0.38, ease: EASE },
+    });
+
+    // Confetti burst
+    const { default: confetti } = await import("canvas-confetti");
+    const colors = [
+      "#7c3aed", "#a855f7", "#c4b5fd",
+      "#6366f1", "#ec4899", "#fbbf24", "#ffffff",
+    ];
+    confetti({
+      particleCount: 100,
+      spread: 120,
+      origin: { x: 0.5, y: 0.32 },
+      colors,
+      startVelocity: 62,
+    });
+    setTimeout(() => {
+      confetti({
+        particleCount: 55,
+        spread: 80,
+        angle: 115,
+        origin: { x: 0.7, y: 0.45 },
+        colors,
+        startVelocity: 44,
+      });
+    }, 180);
+    setTimeout(() => {
+      confetti({
+        particleCount: 40,
+        spread: 70,
+        angle: 65,
+        origin: { x: 0.3, y: 0.5 },
+        colors,
+        startVelocity: 38,
+      });
+    }, 320);
+
+    setTimeout(() => setPhase("revealed"), 420);
+  }, [phase, popperControls]);
+
+  const handleCopyLink = useCallback(() => {
+    if (!shareUrl) return;
+    navigator.clipboard.writeText(shareUrl).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  }, [shareUrl]);
+
+  const whatsAppUrl = useMemo(() => {
+    if (!shareUrl) return "#";
+    return `https://wa.me/?text=${encodeURIComponent(`🎉 ${shareUrl}`)}`;
+  }, [shareUrl]);
+
+  return (
+    <div className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden bg-indigo-50/60 pb-20 pl-[max(1rem,env(safe-area-inset-left))] pr-[max(1rem,env(safe-area-inset-right))] pt-16 text-stone-800 sm:px-5 sm:pb-24 sm:pt-20 dark:bg-slate-950/70 dark:text-slate-100">
+      {/* Ambient glow rings */}
+      <div
+        className="pointer-events-none fixed inset-0 z-0 flex items-center justify-center overflow-hidden"
+        aria-hidden
+      >
+        {([360, 500, 640] as const).map((size, i) => (
+          <motion.div
+            key={size}
+            className="absolute rounded-full border border-indigo-300/25 dark:border-indigo-700/20"
+            style={{ width: size, height: size }}
+            animate={{ scale: [1, 1.06, 1], opacity: [0.6, 0.1, 0.6] }}
+            transition={{
+              duration: 3.6,
+              delay: i * 0.85,
+              repeat: Infinity,
+              ease: "easeInOut",
+            }}
+          />
+        ))}
+      </div>
+
+      {/* Back link */}
+      <div className="fixed left-4 top-4 z-40 sm:left-6 sm:top-6">
+        <Link
+          href="/"
+          className="inline-flex items-center gap-1.5 rounded-full border border-indigo-200/70 bg-white/90 px-3 py-2 text-[0.75rem] font-semibold text-indigo-600 shadow-[0_4px_16px_-4px_rgba(99,102,241,0.18)] backdrop-blur-sm transition-colors hover:bg-white dark:border-slate-700 dark:bg-slate-900/80 dark:text-indigo-400 dark:hover:bg-slate-900"
+        >
+          <Heart className="h-3.5 w-3.5 fill-current" aria-hidden />
+          <span>Wishing Cards</span>
+        </Link>
+      </div>
+
+      {/* Theme toggle */}
+      <div className="fixed right-4 top-4 z-40 sm:right-6 sm:top-6">
+        <ThemeToggle variant="floating" />
+      </div>
+
+      <AnimatePresence mode="wait">
+        {phase !== "revealed" ? (
+          <motion.div
+            key="popper-view"
+            initial={{ opacity: 0, y: 32, filter: "blur(10px)" }}
+            animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+            exit={{
+              opacity: 0,
+              y: -16,
+              transition: { duration: 0.3, ease: EASE_OUT },
+            }}
+            transition={{ duration: 0.52, ease: EASE }}
+            className="flex flex-col items-center gap-5 text-center"
+          >
+            {/* Eyebrow */}
+            <motion.p
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.32, delay: 0.08, ease: EASE_OUT }}
+              className="text-[11px] font-semibold uppercase tracking-[0.3em] text-indigo-600 dark:text-indigo-400"
+            >
+              {congratulationsConfig.eyebrow}
+            </motion.p>
+
+            {/* Headline */}
+            <AnimatedHeadline
+              words={headlineWords}
+              className="max-w-lg bg-linear-to-br from-indigo-600 via-violet-500 to-indigo-700 bg-clip-text text-[1.75rem] font-extrabold leading-tight tracking-tight text-transparent sm:text-4xl md:text-[2.75rem]"
+              ariaLabel={headlineWords.join(" ")}
+            />
+
+            {/* Party popper */}
+            <motion.button
+              type="button"
+              onClick={handlePop}
+              disabled={phase !== "ready"}
+              aria-label="Pop the party popper"
+              animate={popperControls}
+              className="mt-2 cursor-pointer touch-manipulation focus-visible:outline-none disabled:cursor-default"
+              whileHover={phase === "ready" ? { scale: 1.06 } : undefined}
+              whileTap={phase === "ready" ? { scale: 0.95 } : undefined}
+            >
+              <PartyPopperSVG fired={phase === "firing"} />
+            </motion.button>
+
+            {/* Hint */}
+            <AnimatePresence>
+              {phase === "ready" && (
+                <motion.p
+                  initial={{ opacity: 0, y: 4 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -4, transition: { duration: 0.15 } }}
+                  transition={{ delay: 0.55, duration: 0.32, ease: EASE_OUT }}
+                  className="text-sm text-stone-500 dark:text-slate-400"
+                >
+                  Tap to pop the confetti 🎉
+                </motion.p>
+              )}
+            </AnimatePresence>
+          </motion.div>
+        ) : (
+          /* ── Success card ── */
+          <motion.section
+            key="congrats-success"
+            initial={{ opacity: 0, scale: 0.9, y: 24 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.5, delay: 0.1, ease: EASE }}
+            className="relative z-40 w-full max-w-xl overflow-hidden rounded-2xl border border-indigo-200/70 bg-white p-5 text-center shadow-[0_4px_24px_-4px_rgba(99,102,241,0.14),0_0_1px_0_rgba(0,0,0,0.04)] sm:rounded-3xl sm:p-8 dark:border-indigo-900/40 dark:bg-slate-900"
+          >
+            <div className="pointer-events-none absolute inset-0">
+              <div className="absolute inset-x-12 top-0 h-44 bg-linear-to-b from-indigo-50/80 via-violet-50/40 to-transparent blur-3xl dark:from-indigo-950/50" />
+              <div className="absolute -bottom-20 -right-20 h-52 w-52 rounded-full bg-violet-100/40 blur-3xl dark:bg-violet-900/20" />
+            </div>
+
+            <div className="relative z-10 flex flex-col items-center gap-3 sm:gap-4">
+              <motion.div
+                initial={{ scale: 0, rotate: -15, y: 20 }}
+                animate={{ scale: 1, rotate: 0, y: 0 }}
+                transition={{
+                  type: "spring",
+                  stiffness: 240,
+                  damping: 18,
+                  delay: 0.1,
+                }}
+                className="text-6xl sm:text-7xl"
+                aria-hidden
+              >
+                🎉
+              </motion.div>
+
+              <motion.h2
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.32, delay: 0.22, ease: EASE_OUT }}
+                className="max-w-md bg-linear-to-br from-indigo-600 via-violet-500 to-indigo-700 bg-clip-text text-2xl font-extrabold leading-tight tracking-tight text-transparent sm:text-3xl"
+              >
+                {congratulationsConfig.success.headline}
+              </motion.h2>
+
+              <motion.p
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.32, delay: 0.3, ease: EASE_OUT }}
+                className="max-w-md text-balance text-[0.9375rem] leading-[1.65] text-stone-600 sm:text-base dark:text-slate-300"
+              >
+                {congratulationsConfig.message}
+              </motion.p>
+
+              <motion.p
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.32, delay: 0.4, ease: EASE_OUT }}
+                className="max-w-md text-balance text-sm leading-[1.65] text-stone-500 dark:text-slate-400"
+              >
+                {replaceSenderName(congratulationsConfig.success.message, senderName)}
+              </motion.p>
+
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.32, delay: 0.5 }}
+                className="flex items-center justify-center gap-2 text-indigo-600 dark:text-indigo-400"
+              >
+                <Avatar name={senderName} size="sm" />
+                <span className="text-[0.875rem] font-medium">
+                  {replaceSenderName(
+                    congratulationsConfig.success.signature,
+                    senderName,
+                  )}
+                </span>
+              </motion.div>
+
+              {/* Share */}
+              <motion.div
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.32, delay: 0.6, ease: EASE_OUT }}
+                className="mt-1 w-full sm:mt-2"
+              >
+                <p className="mb-2 text-[0.75rem] font-semibold uppercase tracking-wider text-stone-500 sm:text-[0.8125rem] dark:text-slate-400">
+                  Share the celebration
+                </p>
+                <div className="flex flex-col gap-3 sm:flex-row sm:justify-center sm:gap-4">
+                  <a
+                    href={whatsAppUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label="Share on WhatsApp"
+                    className="inline-flex min-h-[48px] shrink-0 touch-manipulation items-center justify-center gap-2 rounded-xl border border-green-200 bg-[#25D366]/10 px-5 py-3 text-[0.9375rem] font-semibold text-[#128C7E] transition-colors hover:bg-[#25D366]/20 active:scale-[0.98] sm:px-6"
+                  >
+                    <MessageCircle className="h-5 w-5 shrink-0" aria-hidden />
+                    <span>Share on WhatsApp</span>
+                  </a>
+                  <motion.button
+                    type="button"
+                    onClick={handleCopyLink}
+                    disabled={!shareUrl}
+                    aria-label={copied ? "Link copied" : "Copy link"}
+                    whileTap={{ scale: 0.98 }}
+                    className="inline-flex min-h-[48px] shrink-0 touch-manipulation items-center justify-center gap-2 rounded-xl border border-indigo-200 bg-indigo-50/80 px-5 py-3 text-[0.9375rem] font-semibold text-indigo-700 transition-colors hover:bg-indigo-100 active:scale-[0.98] disabled:opacity-60 sm:px-6 dark:border-indigo-900/40 dark:bg-indigo-950/50 dark:text-indigo-300 dark:hover:bg-indigo-950/70"
+                  >
+                    {copied ? (
+                      <Check className="h-5 w-5 shrink-0" aria-hidden />
+                    ) : (
+                      <Link2 className="h-5 w-5 shrink-0" aria-hidden />
+                    )}
+                    <span>{copied ? "Copied!" : "Copy link"}</span>
+                  </motion.button>
+                </div>
+              </motion.div>
+            </div>
+          </motion.section>
+        )}
+      </AnimatePresence>
+
+      {/* Footer */}
+      <AnimatePresence>
+        {phase === "revealed" && (
+          <motion.footer
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 12 }}
+            transition={{ duration: 0.4, delay: 1.5, ease: EASE }}
+            className="fixed bottom-0 left-0 right-0 z-50 w-full border-t border-indigo-100/50 bg-white/85 py-2.5 backdrop-blur-sm sm:py-3 dark:border-indigo-900/30 dark:bg-slate-900/85"
+          >
+            <div className="mx-auto flex max-w-xl flex-col items-center justify-center gap-1.5 px-4 text-center sm:flex-row sm:gap-2 sm:px-5">
+              <p className="text-[0.75rem] text-stone-600 sm:text-[0.8125rem] dark:text-slate-400">
+                Loved this? Make one for someone special.
+              </p>
+              <a
+                href="https://www.instagram.com/rushiii.js"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="group inline-flex min-h-[40px] touch-manipulation items-center justify-center gap-1.5 rounded-full border border-indigo-200/60 bg-linear-to-r from-indigo-500 via-violet-500 to-indigo-600 px-4 py-2 text-[0.8125rem] font-semibold text-white shadow-[0_2px_8px_-2px_rgba(99,102,241,0.25)] transition-all duration-200 hover:scale-105 active:scale-[0.98] sm:min-h-[42px] sm:px-5 sm:py-2.5 sm:text-sm"
+              >
+                <Instagram className="h-4 w-4 shrink-0" aria-hidden />
+                <span className="whitespace-nowrap">DM me on Instagram</span>
+                <Heart className="h-3.5 w-3.5 shrink-0 fill-current" aria-hidden />
+              </a>
+            </div>
+          </motion.footer>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
