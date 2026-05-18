@@ -182,16 +182,22 @@ export function ValentinePage() {
 
   const sadMessage = useMemo(() => getSadMessage(noClickCount), [noClickCount]);
 
-  // V5: escape range grows with each rejection
+  // V5: escape range grows with each rejection, clamped to viewport
   const handleNoMove = useCallback(() => {
-    const isNarrow = typeof window !== "undefined" && window.innerWidth < 640;
-    const baseX = isNarrow ? 180 : 140;
-    const baseY = isNarrow ? 100 : 80;
-    const rangeX = Math.min(baseX + noClickCount * 25, 320);
-    const rangeY = Math.min(baseY + noClickCount * 15, 200);
-    const randomX = (Math.random() - 0.5) * rangeX;
-    const randomY = (Math.random() - 0.5) * rangeY;
-    setNoOffsets({ x: randomX, y: randomY });
+    const vw = typeof window !== "undefined" ? window.innerWidth : 640;
+    const isNarrow = vw < 640;
+    const baseX = isNarrow ? 140 : 140;
+    const baseY = isNarrow ? 80 : 80;
+    const rangeX = Math.min(baseX + noClickCount * 25, 280);
+    const rangeY = Math.min(baseY + noClickCount * 15, 180);
+    // Clamp so the button (≈140px wide) can't escape beyond the viewport edge
+    const maxSafeX = Math.max(vw / 2 - 90, 40);
+    const rawX = (Math.random() - 0.5) * rangeX;
+    const rawY = (Math.random() - 0.5) * rangeY;
+    setNoOffsets({
+      x: Math.max(-maxSafeX, Math.min(maxSafeX, rawX)),
+      y: rawY,
+    });
     noMovedAtRef.current = Date.now();
   }, [noClickCount]);
 
@@ -340,7 +346,7 @@ export function ValentinePage() {
   );
 
   return (
-    <div className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden bg-pink-50/90 pb-20 pl-[max(1rem,env(safe-area-inset-left))] pr-[max(1rem,env(safe-area-inset-right))] pt-20 text-stone-800 sm:px-5 sm:pb-24 sm:pt-24 dark:bg-slate-950 dark:text-slate-100">
+    <div className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden bg-pink-50/50 pb-20 pl-[max(1rem,env(safe-area-inset-left))] pr-[max(1rem,env(safe-area-inset-right))] pt-20 text-stone-800 sm:px-5 sm:pb-24 sm:pt-24 dark:bg-slate-950/60 dark:text-slate-100">
       {/* V2: Ambient pulsing glow rings — fixed centered behind card */}
       <div
         className="pointer-events-none fixed inset-0 z-0 flex items-center justify-center overflow-hidden"
@@ -400,8 +406,8 @@ export function ValentinePage() {
         {!isAccepted && (
           <motion.section
             key="valentine-question"
-            initial={{ opacity: 0, y: 32, scale: 0.96 }}
-            animate={{ opacity: 1, y: 0, scale: containerScale }}
+            initial={{ opacity: 0, y: 32, scale: 0.96, filter: "blur(10px)" }}
+            animate={{ opacity: 1, y: 0, scale: containerScale, filter: "blur(0px)" }}
             exit={{
               opacity: [1, 1, 0],
               scale: [1, 1.04, 1.08],
