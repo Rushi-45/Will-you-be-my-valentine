@@ -12,18 +12,28 @@ import { occasions } from "@/config/occasions";
 
 export async function generateMetadata(): Promise<Metadata> {
   return {
-    title: "Wishing Cards — Make Every Moment Special",
+    title: "Make Every Moment Special",
     description:
-      "Create beautiful, personalized wishing cards for any occasion. Valentine's, birthdays, anniversaries, graduations, and more.",
+      "Beautiful, personalized wishing cards for every occasion — Valentine's Day, birthdays, anniversaries, graduations, and more. Animated, shareable, and free.",
+    keywords: [
+      "wishing cards",
+      "personalized greeting cards",
+      "digital cards online",
+      "animated greeting cards",
+      "free digital greeting cards",
+      "send a card online",
+    ],
     openGraph: {
       title: "Wishing Cards — Make Every Moment Special",
       description:
-        "Create beautiful, personalized wishing cards for any occasion.",
+        "Beautiful, personalized wishing cards for every occasion. Animated, shareable, and free.",
+      type: "website",
     },
     twitter: {
+      card: "summary_large_image",
       title: "Wishing Cards — Make Every Moment Special",
       description:
-        "Create beautiful, personalized wishing cards for any occasion.",
+        "Beautiful, personalized wishing cards for every occasion. Animated, shareable, and free.",
     },
   };
 }
