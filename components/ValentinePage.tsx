@@ -371,7 +371,7 @@ export function ValentinePage() {
         ))}
       </div>
 
-      <Header minimal recipientName={recipientName} />
+      <Header label={recipientName ? `For ${recipientName}` : "Valentine's Day"} />
 
       {showMusicToggle && (
         <MusicToggle musicOn={musicOn} onToggle={toggleMusic} />
