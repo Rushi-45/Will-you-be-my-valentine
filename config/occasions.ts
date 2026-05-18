@@ -81,7 +81,7 @@ export const occasions: readonly Occasion[] = [
     icon: Stethoscope,
     gradient: "from-green-500 via-lime-500 to-green-600",
     bgGradient: "from-green-50 to-lime-50",
-    implemented: false,
+    implemented: true,
   },
   {
     name: "Congratulations",
