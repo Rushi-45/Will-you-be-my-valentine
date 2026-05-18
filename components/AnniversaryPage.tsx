@@ -408,7 +408,7 @@ export function AnniversaryPage() {
                 transition={{ duration: 0.42, delay: 0.35, ease: EASE_OUT }}
                 className="text-lg font-medium text-purple-200"
               >
-                Written with love...
+                Some things only get better...
               </motion.p>
               <motion.p
                 initial={{ opacity: 0, y: 10 }}
@@ -416,7 +416,7 @@ export function AnniversaryPage() {
                 transition={{ duration: 0.42, delay: 0.7, ease: EASE_OUT }}
                 className="text-2xl font-extrabold tracking-tight text-white sm:text-3xl"
               >
-                ...and sealed just for you 💌
+                ...and you are one of them 💜
               </motion.p>
             </div>
 
