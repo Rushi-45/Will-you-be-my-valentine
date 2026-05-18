@@ -1,14 +1,46 @@
 import type { Metadata } from "next";
-import { ComingSoon } from "@/components/ComingSoon";
-import { getOccasion } from "@/config/occasions";
+import { Suspense } from "react";
+import { BirthdayPage } from "@/components/BirthdayPage";
 
-const occasion = getOccasion("birthday");
-
-export const metadata: Metadata = {
-  title: `${occasion.name} — Wishing Cards`,
-  description: occasion.description,
+type PageProps = {
+  searchParams: Promise<{ name?: string; sender?: string; age?: string }> | { name?: string; sender?: string; age?: string };
 };
 
-export default function BirthdayPage() {
-  return <ComingSoon occasion={occasion} />;
+function capitalize(s: string) {
+  return s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
+}
+
+function ordinal(n: number) {
+  const s = ["th", "st", "nd", "rd"];
+  const v = n % 100;
+  return n + (s[(v - 20) % 10] ?? s[v] ?? s[0]);
+}
+
+export async function generateMetadata({ searchParams }: PageProps): Promise<Metadata> {
+  const params = await Promise.resolve(searchParams);
+  const name = params?.name?.trim();
+  const rawAge = params?.age?.trim();
+  const age = rawAge ? parseInt(rawAge, 10) : null;
+  const ageLabel = age && Number.isFinite(age) && age > 0 ? ` ${ordinal(age)}` : "";
+
+  if (!name) {
+    return { title: "Happy Birthday — Wishing Cards" };
+  }
+
+  const title = `Happy${ageLabel} Birthday, ${capitalize(name)}!`;
+  const description = `A special birthday wish for ${capitalize(name)}.`;
+  return {
+    title,
+    description,
+    openGraph: { title, description },
+    twitter: { title, description },
+  };
+}
+
+export default function BirthdayRoute() {
+  return (
+    <Suspense fallback={null}>
+      <BirthdayPage />
+    </Suspense>
+  );
 }

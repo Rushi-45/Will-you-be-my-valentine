@@ -1,14 +1,37 @@
 import type { Metadata } from "next";
-import { ComingSoon } from "@/components/ComingSoon";
-import { getOccasion } from "@/config/occasions";
+import { Suspense } from "react";
+import { ThankYouPage } from "@/components/ThankYouPage";
 
-const occasion = getOccasion("thank-you");
-
-export const metadata: Metadata = {
-  title: `${occasion.name} — Wishing Cards`,
-  description: occasion.description,
+type PageProps = {
+  searchParams: Promise<{ name?: string; sender?: string }> | { name?: string; sender?: string };
 };
 
-export default function ThankYouPage() {
-  return <ComingSoon occasion={occasion} />;
+function capitalize(s: string) {
+  return s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
+}
+
+export async function generateMetadata({ searchParams }: PageProps): Promise<Metadata> {
+  const params = await Promise.resolve(searchParams);
+  const name = params?.name?.trim();
+
+  if (!name) {
+    return { title: "Thank You — Wishing Cards" };
+  }
+
+  const title = `Thank You, ${capitalize(name)}!`;
+  const description = `A heartfelt thank you message for ${capitalize(name)}.`;
+  return {
+    title,
+    description,
+    openGraph: { title, description },
+    twitter: { title, description },
+  };
+}
+
+export default function ThankYouRoute() {
+  return (
+    <Suspense fallback={null}>
+      <ThankYouPage />
+    </Suspense>
+  );
 }

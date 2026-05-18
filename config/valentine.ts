@@ -1,7 +1,7 @@
 export const valentineConfig = {
   site: {
     title: "Will You Be My Valentine?",
-    description: "A cute Valentine page.",
+    description: "Send a personalized Valentine's card — animated, shareable, and impossible to say no to.",
     favicon: "/intro-DzUiguR4.webp",
     url: null as string | null,
     ogImage: null as string | null,

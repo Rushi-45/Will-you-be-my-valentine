@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { memo } from "react";
 import { motion } from "framer-motion";
+import { FloatingHearts } from "@/components/FloatingHearts";
 
 const FLOAT_CATS = [
   {
@@ -144,21 +145,21 @@ function FloatingCat({
     <motion.div
       className="absolute select-none"
       style={{ left: x, top: y, width: size, height: size }}
-      initial={{ opacity: 0, scale: 0.3 }}
+      initial={{ opacity: 0, scale: 0.2 }}
       animate={{
-        opacity: 0.85,
+        opacity: 0.88,
         scale: 1,
         y: [0, driftY, 0],
         x: [0, driftX, 0],
         rotate,
       }}
       transition={{
-        opacity: { duration: 0.6, delay: 0.2 + delay * 0.1 },
+        opacity: { duration: 0.5, delay: 0.15 + delay * 0.12 },
         scale: {
           type: "spring",
-          stiffness: 200,
-          damping: 18,
-          delay: delay * 0.08,
+          stiffness: 220,
+          damping: 16,
+          delay: delay * 0.1,
         },
         y: {
           duration,
@@ -208,64 +209,94 @@ function CelebrationOverlayComponent({ cornerCatSrc, huggingCatSrc }: Props) {
       className="pointer-events-none fixed inset-0 z-30 overflow-hidden"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+      transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
       aria-hidden
     >
+      {/* Gradient bloom — expands radially from center */}
       <motion.div
         className="absolute inset-0 bg-linear-to-br from-rose-400/20 via-pink-300/15 to-rose-500/25 dark:from-rose-700/30 dark:via-pink-600/20 dark:to-rose-800/35"
-        initial={{ scale: 0.8, opacity: 0 }}
+        initial={{ scale: 0.4, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
-        transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+        transition={{ duration: 0.65, ease: [0.16, 1, 0.3, 1] }}
       />
       <motion.div
         className="absolute inset-0 bg-[radial-gradient(ellipse_80%_80%_at_50%_50%,rgba(255,255,255,0.4),transparent_60%)] dark:bg-[radial-gradient(ellipse_80%_80%_at_50%_50%,rgba(15,23,42,0.5),transparent_60%)]"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        transition={{ duration: 0.6 }}
+        transition={{ duration: 0.7, delay: 0.1 }}
       />
+
+      {/* Heart layer behind cats for extra texture */}
+      <div className="absolute inset-0 z-10 opacity-60">
+        <FloatingHearts />
+      </div>
+
+      {/* YAY! — cinematic scale overshoot + letter-spacing expansion */}
       <motion.div
-        className="absolute left-1/2 top-1/2 flex -translate-x-1/2 -translate-y-1/2 flex-col items-center justify-center"
-        initial={{ opacity: 0, scale: 0.5 }}
+        className="absolute left-1/2 top-1/2 z-30 flex -translate-x-1/2 -translate-y-1/2 flex-col items-center justify-center"
+        initial={{ opacity: 0, scale: 0.4 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{
           type: "spring",
-          stiffness: 260,
-          damping: 20,
-          delay: 0.15,
+          stiffness: 280,
+          damping: 18,
+          delay: 0.1,
         }}
       >
         <motion.span
-          className="bg-linear-to-br from-rose-600 via-pink-500 to-rose-700 bg-clip-text text-5xl font-extrabold tracking-tight text-transparent drop-shadow-sm sm:text-6xl md:text-7xl"
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.35, duration: 0.3 }}
+          className="bg-linear-to-br from-rose-600 via-pink-500 to-rose-700 bg-clip-text text-5xl font-extrabold text-transparent drop-shadow-sm sm:text-6xl md:text-7xl"
+          initial={{ opacity: 0, letterSpacing: "-0.08em", scale: 1.3 }}
+          animate={{ opacity: 1, letterSpacing: "-0.01em", scale: 1 }}
+          transition={{
+            opacity: { delay: 0.2, duration: 0.28 },
+            letterSpacing: {
+              type: "spring",
+              stiffness: 160,
+              damping: 18,
+              delay: 0.2,
+            },
+            scale: {
+              type: "spring",
+              stiffness: 200,
+              damping: 14,
+              delay: 0.2,
+            },
+          }}
         >
           YAY!
         </motion.span>
         <motion.span
-          className="mt-1 text-lg font-semibold text-rose-600/90 sm:text-xl"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.55, duration: 0.35 }}
+          className="mt-1.5 text-lg font-semibold text-rose-600/90 sm:text-xl"
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{
+            delay: 0.62,
+            duration: 0.38,
+            ease: [0.16, 1, 0.3, 1],
+          }}
         >
           You said yes!
         </motion.span>
       </motion.div>
-      {FLOAT_CATS.map((config, i) => (
-        <FloatingCat
-          key={i}
-          src={srcMap[config.src]}
-          alt=""
-          x={config.x}
-          y={config.y}
-          size={config.size}
-          duration={config.duration}
-          delay={config.delay}
-          driftY={config.driftY}
-          driftX={config.driftX}
-          rotate={config.rotate}
-        />
-      ))}
+
+      {/* Cats — staggered pop-in with wider delay spread */}
+      <div className="absolute inset-0 z-20">
+        {FLOAT_CATS.map((config, i) => (
+          <FloatingCat
+            key={i}
+            src={srcMap[config.src]}
+            alt=""
+            x={config.x}
+            y={config.y}
+            size={config.size}
+            duration={config.duration}
+            delay={config.delay}
+            driftY={config.driftY}
+            driftX={config.driftX}
+            rotate={config.rotate}
+          />
+        ))}
+      </div>
     </motion.div>
   );
 }

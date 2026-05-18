@@ -45,7 +45,7 @@ export const occasions: readonly Occasion[] = [
     icon: Cake,
     gradient: "from-blue-500 via-cyan-500 to-blue-600",
     bgGradient: "from-blue-50 to-cyan-50",
-    implemented: false,
+    implemented: true,
   },
   {
     name: "Anniversary",
@@ -54,7 +54,7 @@ export const occasions: readonly Occasion[] = [
     icon: Gift,
     gradient: "from-purple-500 via-fuchsia-500 to-purple-600",
     bgGradient: "from-purple-50 to-fuchsia-50",
-    implemented: false,
+    implemented: true,
   },
   {
     name: "Graduation",
@@ -63,7 +63,7 @@ export const occasions: readonly Occasion[] = [
     icon: GraduationCap,
     gradient: "from-amber-500 via-orange-500 to-amber-600",
     bgGradient: "from-amber-50 to-orange-50",
-    implemented: false,
+    implemented: true,
   },
   {
     name: "Thank You",
@@ -72,7 +72,7 @@ export const occasions: readonly Occasion[] = [
     icon: MessageCircleHeart,
     gradient: "from-emerald-500 via-teal-500 to-emerald-600",
     bgGradient: "from-emerald-50 to-teal-50",
-    implemented: false,
+    implemented: true,
   },
   {
     name: "Get Well",
@@ -81,7 +81,7 @@ export const occasions: readonly Occasion[] = [
     icon: Stethoscope,
     gradient: "from-green-500 via-lime-500 to-green-600",
     bgGradient: "from-green-50 to-lime-50",
-    implemented: false,
+    implemented: true,
   },
   {
     name: "Congratulations",
@@ -90,7 +90,7 @@ export const occasions: readonly Occasion[] = [
     icon: Star,
     gradient: "from-indigo-500 via-violet-500 to-indigo-600",
     bgGradient: "from-indigo-50 to-violet-50",
-    implemented: false,
+    implemented: true,
   },
 ] as const;
 

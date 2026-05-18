@@ -14,26 +14,32 @@ import {
   Volume2,
   VolumeX,
 } from "lucide-react";
+import Link from "next/link";
 import { valentineConfig, replaceSenderName } from "@/config/valentine";
 import { CelebrationOverlay } from "@/components/CelebrationOverlay";
 import { FloatingHearts } from "@/components/FloatingHearts";
-import { Header } from "@/components/Header";
 import { Avatar } from "@/components/Avatar";
 import { Icon } from "@/components/ui/Icon";
+import { AnimatedHeadline } from "@/components/AnimatedHeadline";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 const MusicToggle = memo(function MusicToggle({
   musicOn,
   onToggle,
+  footerVisible,
 }: {
   musicOn: boolean;
   onToggle: () => void;
+  footerVisible: boolean;
 }) {
   return (
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ delay: 1 }}
-      className="fixed bottom-5 right-5 z-50 shadow-[0_4px_16px_-4px_rgba(190,18,60,0.15)] rounded-full sm:bottom-6 sm:right-6"
+      className={`fixed right-5 z-50 rounded-full shadow-[0_4px_16px_-4px_rgba(190,18,60,0.15)] transition-[bottom] duration-300 sm:right-6 ${
+        footerVisible ? "bottom-[4.5rem] sm:bottom-20" : "bottom-5 sm:bottom-6"
+      }`}
     >
       <Icon
         icon={musicOn ? Volume2 : VolumeX}
@@ -127,13 +133,33 @@ export function ValentinePage() {
   const [musicOn, setMusicOn] = useState(false);
   const [shareUrl, setShareUrl] = useState("");
   const [copied, setCopied] = useState(false);
+  // V3: card shake state
+  const [isShaking, setIsShaking] = useState(false);
+  // V8: music hint tooltip
+  const [showMusicHint, setShowMusicHint] = useState(false);
+
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const noMovedAtRef = useRef<number>(0);
+  const hintShownRef = useRef(false);
   const musicSrc = valentineConfig.backgroundMusic ?? null;
 
   useEffect(() => {
     if (typeof window !== "undefined") setShareUrl(window.location.href);
   }, []);
+
+  // V8: show the music hint once, 3s after mount — never again after music is enabled
+  useEffect(() => {
+    if (!musicSrc || hintShownRef.current) return;
+    const showTimer = setTimeout(() => {
+      hintShownRef.current = true;
+      setShowMusicHint(true);
+    }, 3000);
+    const hideTimer = setTimeout(() => setShowMusicHint(false), 6200);
+    return () => {
+      clearTimeout(showTimer);
+      clearTimeout(hideTimer);
+    };
+  }, [musicSrc]);
 
   const headlineLine1 = useMemo(
     () =>
@@ -142,6 +168,11 @@ export function ValentinePage() {
         : valentineConfig.headline.line1,
     [recipientName],
   );
+  const headlineWords = useMemo(
+    () => headlineLine1.split(" "),
+    [headlineLine1],
+  );
+
   const successHeadline = useMemo(
     () =>
       recipientName
@@ -157,65 +188,90 @@ export function ValentinePage() {
 
   const sadMessage = useMemo(() => getSadMessage(noClickCount), [noClickCount]);
 
+  // V5: escape range grows with each rejection, clamped to card bounds (max-w-xl = 576px)
   const handleNoMove = useCallback(() => {
-    const isNarrow = typeof window !== "undefined" && window.innerWidth < 640;
-    const rangeX = isNarrow ? 180 : 140;
-    const rangeY = isNarrow ? 100 : 80;
-    const randomX = (Math.random() - 0.5) * rangeX;
-    const randomY = (Math.random() - 0.5) * rangeY;
-    setNoOffsets({ x: randomX, y: randomY });
+    const rangeX = Math.min(140 + noClickCount * 25, 280);
+    const rangeY = Math.min(80 + noClickCount * 15, 180);
+    // Card is max-w-xl (288px half). Button is ~140px wide (70px half).
+    // Cap at 210px so the button stays within the card's overflow-hidden boundary.
+    const maxSafeX = 210;
+    const rawX = (Math.random() - 0.5) * rangeX;
+    const rawY = (Math.random() - 0.5) * rangeY;
+    setNoOffsets({
+      x: Math.max(-maxSafeX, Math.min(maxSafeX, rawX)),
+      y: rawY,
+    });
     noMovedAtRef.current = Date.now();
-  }, []);
+  }, [noClickCount]);
 
   const handleNoTouchStart = useCallback(() => {
     handleNoMove();
   }, [handleNoMove]);
 
+  // V3: card shakes on No click
   const handleNoClick = useCallback(() => {
     const movedRecently = Date.now() - noMovedAtRef.current < 400;
     if (movedRecently) return;
     setNoClickCount((previous) => previous + 1);
     setYesScale((previous) => Math.min(previous + 0.2, 3));
     setNoScale((previous) => Math.max(previous - 0.08, 0.5));
+    setIsShaking(true);
+    setTimeout(() => setIsShaking(false), 500);
   }, []);
 
+  // V4: rose-colored confetti shower
   const triggerConfetti = useCallback(async () => {
     setIsConfettiRunning(true);
 
     const { default: confetti } = await import("canvas-confetti");
 
-    const duration = 1000;
+    const colors = [
+      "#e11d48",
+      "#f43f5e",
+      "#fb7185",
+      "#fda4af",
+      "#be185d",
+      "#fecdd3",
+    ];
+    const duration = 2200;
     const animationEnd = Date.now() + duration;
-
     const randomInRange = (min: number, max: number) =>
       Math.random() * (max - min) + min;
-
     let frameCount = 0;
+
+    // Central burst 400ms in for a layered effect
+    setTimeout(() => {
+      confetti({
+        particleCount: 60,
+        spread: 100,
+        origin: { x: 0.5, y: 0.45 },
+        colors,
+        startVelocity: 35,
+      });
+    }, 400);
 
     const frame = () => {
       const timeLeft = animationEnd - Date.now();
-
       if (timeLeft <= 0) {
         setIsConfettiRunning(false);
         return;
       }
-
-      const particleCount = 18 * (timeLeft / duration);
-
+      const particleCount = 22 * (timeLeft / duration);
       if (frameCount % 3 === 0) {
         confetti({
           particleCount,
           spread: 80,
           origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 },
+          colors,
         });
         confetti({
           particleCount,
           spread: 80,
           origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 },
+          colors,
         });
       }
       frameCount += 1;
-
       requestAnimationFrame(frame);
     };
 
@@ -224,7 +280,6 @@ export function ValentinePage() {
 
   const handleYesClick = useCallback(() => {
     if (isConfettiRunning) return;
-
     setIsAccepted(true);
     triggerConfetti();
   }, [isConfettiRunning, triggerConfetti]);
@@ -287,12 +342,75 @@ export function ValentinePage() {
     return Math.min(1 + added, 1.9);
   }, [noClickCount]);
 
+  // V5: No button rotation increases with each click
+  const noButtonRotate = useMemo(
+    () => Math.min(noClickCount * 5, 30),
+    [noClickCount],
+  );
+
   return (
-    <div className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden bg-pink-50/90 pt-20 pb-20 pl-[max(1rem,env(safe-area-inset-left))] pr-[max(1rem,env(safe-area-inset-right))] text-stone-800 sm:px-5 sm:pt-24 sm:pb-24 dark:bg-slate-950 dark:text-slate-100">
-      <Header senderName={senderName} recipientName={recipientName} />
+    <div className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden bg-pink-50/50 pb-20 pl-[max(1rem,env(safe-area-inset-left))] pr-[max(1rem,env(safe-area-inset-right))] pt-16 text-stone-800 sm:px-5 sm:pb-24 sm:pt-20 dark:bg-slate-950/60 dark:text-slate-100">
+      {/* V2: Ambient pulsing glow rings — fixed centered behind card */}
+      <div
+        className="pointer-events-none fixed inset-0 z-0 flex items-center justify-center overflow-hidden"
+        aria-hidden
+      >
+        {([380, 520, 660] as const).map((size, i) => (
+          <motion.div
+            key={size}
+            className="absolute rounded-full border border-rose-300/20 dark:border-rose-700/20"
+            style={{ width: size, height: size }}
+            animate={{
+              scale: [1, 1.06, 1],
+              opacity: [0.7, 0.12, 0.7],
+            }}
+            transition={{
+              duration: 3.5,
+              delay: i * 0.75,
+              repeat: Infinity,
+              ease: "easeInOut",
+            }}
+          />
+        ))}
+      </div>
+
+      {/* Floating back link — top-left, mirrors homepage floating toggle */}
+      <div className="fixed left-4 top-4 z-40 sm:left-6 sm:top-6">
+        <Link
+          href="/"
+          className="inline-flex items-center gap-1.5 rounded-full border border-rose-200/70 bg-white/90 px-3 py-2 text-[0.75rem] font-semibold text-rose-600 shadow-[0_4px_16px_-4px_rgba(190,18,60,0.18)] backdrop-blur-sm transition-colors hover:bg-white dark:border-slate-700 dark:bg-slate-900/80 dark:text-rose-400 dark:hover:bg-slate-900"
+        >
+          <Heart className="h-3.5 w-3.5 fill-current" aria-hidden />
+          <span>Wishing Cards</span>
+        </Link>
+      </div>
+
+      {/* Floating theme toggle — top-right, same position as homepage */}
+      <div className="fixed right-4 top-4 z-40 sm:right-6 sm:top-6">
+        <ThemeToggle variant="floating" />
+      </div>
+
       {showMusicToggle && (
-        <MusicToggle musicOn={musicOn} onToggle={toggleMusic} />
+        <MusicToggle musicOn={musicOn} onToggle={toggleMusic} footerVisible={isAccepted} />
       )}
+
+      {/* V8: Music hint tooltip */}
+      <AnimatePresence>
+        {showMusicHint && (
+          <motion.div
+            className="fixed bottom-20 right-5 z-50 sm:bottom-24 sm:right-6"
+            initial={{ opacity: 0, x: 10, scale: 0.9 }}
+            animate={{ opacity: 1, x: 0, scale: 1 }}
+            exit={{ opacity: 0, x: 10, scale: 0.9 }}
+            transition={{ duration: 0.28 }}
+          >
+            <div className="flex items-center gap-1.5 rounded-full border border-rose-200/70 bg-white/95 px-3 py-1.5 text-[0.75rem] font-semibold text-rose-600 shadow-md backdrop-blur-sm dark:border-rose-900/50 dark:bg-slate-900/95 dark:text-rose-400">
+              <span>♫ Tap for mood</span>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <FloatingHearts />
       {isAccepted && (
         <CelebrationOverlay
@@ -300,12 +418,13 @@ export function ValentinePage() {
           huggingCatSrc={valentineConfig.images.huggingCat}
         />
       )}
+
       <AnimatePresence mode="wait">
         {!isAccepted && (
           <motion.section
             key="valentine-question"
-            initial={{ opacity: 0, y: 32, scale: 0.96 }}
-            animate={{ opacity: 1, y: 0, scale: containerScale }}
+            initial={{ opacity: 0, y: 32, scale: 0.96, filter: "blur(10px)" }}
+            animate={{ opacity: 1, y: 0, scale: containerScale, filter: "blur(0px)" }}
             exit={{
               opacity: [1, 1, 0],
               scale: [1, 1.04, 1.08],
@@ -320,7 +439,10 @@ export function ValentinePage() {
               duration: MOTION.duration.entrance,
               ease: MOTION.ease,
             }}
-            className="relative w-full max-w-xl overflow-hidden rounded-2xl border border-pink-200/80 bg-white px-5 py-5 shadow-[0_4px_24px_-4px_rgba(190,18,60,0.12),0_0_1px_0_rgba(0,0,0,0.04)] sm:rounded-3xl sm:px-8 sm:py-8 md:p-10 dark:border-rose-900/40 dark:bg-slate-900"
+            // V3: card shake class toggled on No click
+            className={`relative w-full max-w-xl overflow-hidden rounded-2xl border border-pink-200/80 bg-white px-5 py-5 shadow-[0_4px_24px_-4px_rgba(190,18,60,0.12),0_0_1px_0_rgba(0,0,0,0.04)] sm:rounded-3xl sm:px-8 sm:py-8 md:p-10 dark:border-rose-900/40 dark:bg-slate-900 ${
+              isShaking ? "animate-card-shake" : ""
+            }`}
           >
             <div className="pointer-events-none absolute inset-0">
               <div className="absolute -left-24 -top-24 h-64 w-64 rounded-full bg-rose-100/60 blur-3xl dark:bg-rose-900/30" />
@@ -362,21 +484,14 @@ export function ValentinePage() {
                 {valentineConfig.eyebrow}
               </motion.p>
 
-              <motion.h1
-                initial={{ opacity: 0, y: 20, scale: 0.98 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                transition={{
-                  duration: MOTION.duration.entrance,
-                  delay: MOTION.stagger * 2,
-                  ease: MOTION.ease,
-                }}
+              {/* V1: word-by-word blur reveal headline */}
+              <AnimatedHeadline
+                words={headlineWords}
+                secondLine={valentineConfig.headline.line2}
                 className="max-w-lg bg-linear-to-br from-rose-700 via-pink-600 to-rose-800 bg-clip-text text-[2rem] font-extrabold leading-tight tracking-tight text-transparent sm:text-5xl md:text-[3.25rem] md:leading-[1.12]"
-              >
-                {headlineLine1}
-                <span className="mt-1.5 block text-pink-600">
-                  {valentineConfig.headline.line2}
-                </span>
-              </motion.h1>
+                secondLineClassName="text-pink-600 dark:text-pink-400"
+                ariaLabel={`${headlineLine1} ${valentineConfig.headline.line2}`}
+              />
 
               <motion.p
                 key={noClickCount}
@@ -409,7 +524,7 @@ export function ValentinePage() {
                 )}
               </motion.p>
 
-              <div className="mt-4 min-h-[120px] flex items-center justify-center sm:min-h-[140px]">
+              <div className="mt-4 flex min-h-[120px] items-center justify-center sm:min-h-[140px]">
                 <AnimatePresence mode="wait">
                   {noClickCount === 0 ? (
                     <motion.p
@@ -463,41 +578,61 @@ export function ValentinePage() {
                 }}
                 className="mt-1 flex w-full flex-col items-center justify-center gap-4 sm:flex-row sm:gap-4"
               >
-                <motion.button
-                  type="button"
-                  whileHover={{
-                    scale: isConfettiRunning ? 1 : yesScale + 0.04,
-                    y: isConfettiRunning ? 0 : -2,
-                    boxShadow:
-                      "0 10px 24px -6px rgba(190, 18, 60, 0.35), 0 0 0 1px rgba(255,255,255,0.25) inset",
-                  }}
-                  whileTap={{
-                    scale: isConfettiRunning
-                      ? 1
-                      : Math.max(yesScale - 0.02, 0.98),
-                    y: 0,
-                  }}
+                {/* V6: Yes button with glow ring — parent handles yesScale */}
+                <motion.div
+                  className="relative shrink-0"
                   animate={{ scale: yesScale }}
                   transition={{ type: "spring", stiffness: 280, damping: 20 }}
-                  onClick={handleYesClick}
-                  disabled={isConfettiRunning}
-                  className={`inline-flex min-h-[48px] min-w-[140px] shrink-0 touch-manipulation items-center justify-center rounded-full bg-linear-to-r from-rose-500 via-pink-500 to-rose-600 px-8 py-4 text-[0.9375rem] font-semibold text-white shadow-[0_4px_14px_-2px_rgba(190,18,60,0.35)] transition-shadow duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-400/60 focus-visible:ring-offset-2 focus-visible:ring-offset-white active:scale-[0.98] sm:min-h-[48px] sm:min-w-[160px] sm:px-10 sm:py-3.5 ${yesCursorClasses}`}
                 >
-                  <span className="mr-1.5">Yes</span>
-                  <Heart className="h-5 w-5 fill-current" aria-hidden />
-                </motion.button>
+                  <motion.div
+                    className="pointer-events-none absolute -inset-3 rounded-full bg-rose-400/20 dark:bg-rose-500/25"
+                    animate={{
+                      scale: [1, 1.28, 1],
+                      opacity: [0.55, 0.07, 0.55],
+                    }}
+                    transition={{
+                      duration: 1.8,
+                      repeat: Infinity,
+                      ease: "easeInOut",
+                    }}
+                    aria-hidden
+                  />
+                  <motion.button
+                    type="button"
+                    whileHover={{
+                      scale: isConfettiRunning ? 1 : 1.04,
+                      y: isConfettiRunning ? 0 : -2,
+                      boxShadow:
+                        "0 10px 24px -6px rgba(190, 18, 60, 0.35), 0 0 0 1px rgba(255,255,255,0.25) inset",
+                    }}
+                    whileTap={{
+                      scale: isConfettiRunning ? 1 : 0.98,
+                      y: 0,
+                    }}
+                    transition={{ type: "spring", stiffness: 280, damping: 20 }}
+                    onClick={handleYesClick}
+                    disabled={isConfettiRunning}
+                    className={`inline-flex min-h-[48px] min-w-[140px] touch-manipulation items-center justify-center rounded-full bg-linear-to-r from-rose-500 via-pink-500 to-rose-600 px-8 py-4 text-[0.9375rem] font-semibold text-white shadow-[0_4px_14px_-2px_rgba(190,18,60,0.35)] transition-shadow duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-400/60 focus-visible:ring-offset-2 focus-visible:ring-offset-white active:scale-[0.98] sm:min-h-[48px] sm:min-w-[160px] sm:px-10 sm:py-3.5 ${yesCursorClasses}`}
+                  >
+                    <span className="mr-1.5">Yes</span>
+                    <Heart className="h-5 w-5 fill-current" aria-hidden />
+                  </motion.button>
+                </motion.div>
 
+                {/* V5: No button wrapper rotates and escapes farther with each click */}
                 <motion.div
-                  className="relative min-h-[48px] w-[140px] shrink-0 sm:h-auto sm:w-auto origin-center"
+                  className="relative min-h-[48px] w-[140px] origin-center shrink-0 sm:h-auto sm:w-auto"
                   animate={{
                     x: noOffsets.x,
                     y: noOffsets.y,
                     scale: noScale,
+                    rotate: noButtonRotate,
                   }}
                   transition={{
                     x: { type: "spring", stiffness: 180, damping: 16 },
                     y: { type: "spring", stiffness: 180, damping: 16 },
                     scale: { type: "spring", stiffness: 320, damping: 22 },
+                    rotate: { type: "spring", stiffness: 200, damping: 18 },
                   }}
                 >
                   <motion.button
@@ -674,34 +809,40 @@ export function ValentinePage() {
         )}
       </AnimatePresence>
 
-      <motion.footer
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.4, delay: 0.5 }}
-        className="absolute bottom-0 left-0 right-0 z-30 w-full border-t border-pink-100/50 bg-white/80 py-2.5 backdrop-blur-sm sm:py-3 dark:border-rose-900/30 dark:bg-slate-900/80"
-      >
-        <div className="mx-auto flex max-w-xl flex-col items-center justify-center gap-1.5 px-4 text-center sm:flex-row sm:gap-2 sm:px-5">
-          <p className="text-[0.75rem] text-stone-600 sm:text-[0.8125rem] dark:text-slate-400">
-            Want one like this?
-          </p>
-          <a
-            href="https://www.instagram.com/rushiii.js"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="group relative inline-flex min-h-[40px] touch-manipulation items-center justify-center gap-1.5 overflow-hidden rounded-full border border-rose-200/60 bg-linear-to-r from-rose-500 via-pink-500 to-rose-600 px-4 py-2 text-[0.8125rem] font-semibold text-white shadow-[0_2px_8px_-2px_rgba(190,18,60,0.25)] transition-all duration-200 hover:scale-105 hover:border-rose-300/80 hover:shadow-[0_4px_12px_-2px_rgba(190,18,60,0.35)] hover:brightness-105 active:scale-[0.98] sm:min-h-[42px] sm:px-5 sm:py-2.5 sm:text-sm"
+      {/* Footer — only after acceptance, fixed so it can't be covered by a growing card */}
+      <AnimatePresence>
+        {isAccepted && (
+          <motion.footer
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 12 }}
+            transition={{ duration: 0.4, delay: 2.2, ease: MOTION.ease }}
+            className="fixed bottom-0 left-0 right-0 z-50 w-full border-t border-pink-100/50 bg-white/85 py-2.5 backdrop-blur-sm sm:py-3 dark:border-rose-900/30 dark:bg-slate-900/85"
           >
-            <Instagram
-              className="h-4 w-4 shrink-0 transition-transform group-hover:scale-110 sm:h-[18px] sm:w-[18px]"
-              aria-hidden
-            />
-            <span className="whitespace-nowrap">DM me on Instagram</span>
-            <Heart
-              className="h-3.5 w-3.5 shrink-0 fill-current transition-transform group-hover:scale-110 sm:h-4 sm:w-4"
-              aria-hidden
-            />
-          </a>
-        </div>
-      </motion.footer>
+            <div className="mx-auto flex max-w-xl flex-col items-center justify-center gap-1.5 px-4 text-center sm:flex-row sm:gap-2 sm:px-5">
+              <p className="text-[0.75rem] text-stone-600 sm:text-[0.8125rem] dark:text-slate-400">
+                Loved this? Make one for someone special.
+              </p>
+              <a
+                href="https://www.instagram.com/rushiii.js"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="group relative inline-flex min-h-[40px] touch-manipulation items-center justify-center gap-1.5 overflow-hidden rounded-full border border-rose-200/60 bg-linear-to-r from-rose-500 via-pink-500 to-rose-600 px-4 py-2 text-[0.8125rem] font-semibold text-white shadow-[0_2px_8px_-2px_rgba(190,18,60,0.25)] transition-all duration-200 hover:scale-105 hover:shadow-[0_4px_12px_-2px_rgba(190,18,60,0.35)] hover:brightness-105 active:scale-[0.98] sm:min-h-[42px] sm:px-5 sm:py-2.5 sm:text-sm"
+              >
+                <Instagram
+                  className="h-4 w-4 shrink-0 transition-transform group-hover:scale-110 sm:h-[18px] sm:w-[18px]"
+                  aria-hidden
+                />
+                <span className="whitespace-nowrap">DM me on Instagram</span>
+                <Heart
+                  className="h-3.5 w-3.5 shrink-0 fill-current transition-transform group-hover:scale-110 sm:h-4 sm:w-4"
+                  aria-hidden
+                />
+              </a>
+            </div>
+          </motion.footer>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
