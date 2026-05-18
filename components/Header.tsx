@@ -16,9 +16,31 @@ type HeaderProps = {
   senderName?: string | null;
   recipientName?: string | null;
   label?: string | null;
+  /** Minimal mode: heart icon only + ThemeToggle. Used on card routes to avoid breaking immersion. */
+  minimal?: boolean;
 };
 
-function HeaderComponent({ senderName, recipientName, label }: HeaderProps) {
+function HeaderComponent({ senderName, recipientName, label, minimal }: HeaderProps) {
+  if (minimal) {
+    return (
+      <header className="fixed left-0 right-0 top-0 z-40 border-b border-pink-100/40 bg-white/70 backdrop-blur-sm dark:border-slate-800/60 dark:bg-slate-900/70">
+        <nav className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3 sm:px-6">
+          <Link
+            href="/"
+            aria-label="Back to home"
+            className="group inline-flex h-8 w-8 items-center justify-center rounded-full text-rose-500 transition-colors hover:text-rose-600 dark:text-rose-400 dark:hover:text-rose-300"
+          >
+            <Heart
+              className="h-4 w-4 fill-current transition-transform group-hover:scale-110"
+              aria-hidden
+            />
+          </Link>
+          <ThemeToggle variant="inline" />
+        </nav>
+      </header>
+    );
+  }
+
   return (
     <header className="fixed left-0 right-0 top-0 z-40 border-b border-pink-100/50 bg-white/80 backdrop-blur-sm dark:border-slate-800 dark:bg-slate-900/80">
       <nav className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3 sm:px-6">

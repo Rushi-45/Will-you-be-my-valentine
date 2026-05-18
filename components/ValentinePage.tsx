@@ -371,7 +371,7 @@ export function ValentinePage() {
         ))}
       </div>
 
-      <Header senderName={senderName} recipientName={recipientName} />
+      <Header minimal />
 
       {showMusicToggle && (
         <MusicToggle musicOn={musicOn} onToggle={toggleMusic} />
@@ -792,34 +792,40 @@ export function ValentinePage() {
         )}
       </AnimatePresence>
 
-      <motion.footer
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.4, delay: 0.5 }}
-        className="absolute bottom-0 left-0 right-0 z-30 w-full border-t border-pink-100/50 bg-white/80 py-2.5 backdrop-blur-sm sm:py-3 dark:border-rose-900/30 dark:bg-slate-900/80"
-      >
-        <div className="mx-auto flex max-w-xl flex-col items-center justify-center gap-1.5 px-4 text-center sm:flex-row sm:gap-2 sm:px-5">
-          <p className="text-[0.75rem] text-stone-600 sm:text-[0.8125rem] dark:text-slate-400">
-            Want one like this?
-          </p>
-          <a
-            href="https://www.instagram.com/rushiii.js"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="group relative inline-flex min-h-[40px] touch-manipulation items-center justify-center gap-1.5 overflow-hidden rounded-full border border-rose-200/60 bg-linear-to-r from-rose-500 via-pink-500 to-rose-600 px-4 py-2 text-[0.8125rem] font-semibold text-white shadow-[0_2px_8px_-2px_rgba(190,18,60,0.25)] transition-all duration-200 hover:scale-105 hover:border-rose-300/80 hover:shadow-[0_4px_12px_-2px_rgba(190,18,60,0.35)] hover:brightness-105 active:scale-[0.98] sm:min-h-[42px] sm:px-5 sm:py-2.5 sm:text-sm"
+      {/* Footer — only after acceptance, fixed so it can't be covered by a growing card */}
+      <AnimatePresence>
+        {isAccepted && (
+          <motion.footer
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 12 }}
+            transition={{ duration: 0.4, delay: 2.2, ease: MOTION.ease }}
+            className="fixed bottom-0 left-0 right-0 z-50 w-full border-t border-pink-100/50 bg-white/85 py-2.5 backdrop-blur-sm sm:py-3 dark:border-rose-900/30 dark:bg-slate-900/85"
           >
-            <Instagram
-              className="h-4 w-4 shrink-0 transition-transform group-hover:scale-110 sm:h-[18px] sm:w-[18px]"
-              aria-hidden
-            />
-            <span className="whitespace-nowrap">DM me on Instagram</span>
-            <Heart
-              className="h-3.5 w-3.5 shrink-0 fill-current transition-transform group-hover:scale-110 sm:h-4 sm:w-4"
-              aria-hidden
-            />
-          </a>
-        </div>
-      </motion.footer>
+            <div className="mx-auto flex max-w-xl flex-col items-center justify-center gap-1.5 px-4 text-center sm:flex-row sm:gap-2 sm:px-5">
+              <p className="text-[0.75rem] text-stone-600 sm:text-[0.8125rem] dark:text-slate-400">
+                Loved this? Make one for someone special.
+              </p>
+              <a
+                href="https://www.instagram.com/rushiii.js"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="group relative inline-flex min-h-[40px] touch-manipulation items-center justify-center gap-1.5 overflow-hidden rounded-full border border-rose-200/60 bg-linear-to-r from-rose-500 via-pink-500 to-rose-600 px-4 py-2 text-[0.8125rem] font-semibold text-white shadow-[0_2px_8px_-2px_rgba(190,18,60,0.25)] transition-all duration-200 hover:scale-105 hover:shadow-[0_4px_12px_-2px_rgba(190,18,60,0.35)] hover:brightness-105 active:scale-[0.98] sm:min-h-[42px] sm:px-5 sm:py-2.5 sm:text-sm"
+              >
+                <Instagram
+                  className="h-4 w-4 shrink-0 transition-transform group-hover:scale-110 sm:h-[18px] sm:w-[18px]"
+                  aria-hidden
+                />
+                <span className="whitespace-nowrap">DM me on Instagram</span>
+                <Heart
+                  className="h-3.5 w-3.5 shrink-0 fill-current transition-transform group-hover:scale-110 sm:h-4 sm:w-4"
+                  aria-hidden
+                />
+              </a>
+            </div>
+          </motion.footer>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
