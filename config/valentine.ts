@@ -48,6 +48,14 @@ export const valentineConfig = {
   },
 
   backgroundMusic: "/valentine-music.mp3",
+
+  // Drop your photos into /public and list them here.
+  // Each entry shows in the carousel after the recipient says Yes.
+  gallery: [
+    { src: "/intro-DzUiguR4.webp", caption: "Always the cutest" },
+    { src: "/intro-DzUiguR4.webp", caption: "That cozy evening" },
+    { src: "/intro-DzUiguR4.webp", caption: "Us, always" },
+  ] as { src: string; caption?: string }[],
 } as const;
 
 export function replaceSenderName(text: string, name: string): string {
