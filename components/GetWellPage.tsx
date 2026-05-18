@@ -412,7 +412,7 @@ export function GetWellPage() {
                 transition={{ duration: 0.42, delay: 0.35, ease: EASE_OUT }}
                 className="text-lg font-medium text-green-200"
               >
-                The healing is on its way...
+                Tough days don't last forever...
               </motion.p>
               <motion.p
                 initial={{ opacity: 0, y: 10 }}
@@ -420,7 +420,7 @@ export function GetWellPage() {
                 transition={{ duration: 0.42, delay: 0.7, ease: EASE_OUT }}
                 className="text-2xl font-extrabold tracking-tight text-white sm:text-3xl"
               >
-                ...sending all my warmth 🌱
+                ...but tough people sure do 🌻
               </motion.p>
             </div>
 

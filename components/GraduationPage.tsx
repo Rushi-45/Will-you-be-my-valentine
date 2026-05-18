@@ -385,7 +385,7 @@ export function GraduationPage() {
                 transition={{ duration: 0.42, delay: 0.35, ease: EASE_OUT }}
                 className="text-lg font-medium text-amber-200"
               >
-                The ceremony is over...
+                The hard part is officially over...
               </motion.p>
               <motion.p
                 initial={{ opacity: 0, y: 10 }}
@@ -393,7 +393,7 @@ export function GraduationPage() {
                 transition={{ duration: 0.42, delay: 0.7, ease: EASE_OUT }}
                 className="text-2xl font-extrabold tracking-tight text-white sm:text-3xl"
               >
-                ...your future begins now 🌟
+                ...now go show the world 🌟
               </motion.p>
             </div>
 
@@ -414,7 +414,7 @@ export function GraduationPage() {
                 transition={{ type: "spring", stiffness: 280, damping: 20 }}
                 className="inline-flex min-h-[54px] touch-manipulation items-center gap-2.5 rounded-full border border-amber-300/40 bg-white/10 px-10 py-4 text-base font-semibold text-white backdrop-blur-sm transition-colors hover:bg-white/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300/60 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent"
               >
-                <span>Step into the light</span>
+                <span>Claim your moment</span>
                 <span aria-hidden>✨</span>
               </motion.button>
             </motion.div>

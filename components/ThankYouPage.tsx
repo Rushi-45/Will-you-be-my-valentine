@@ -364,7 +364,7 @@ export function ThankYouPage() {
                 transition={{ duration: 0.42, delay: 0.35, ease: EASE_OUT }}
                 className="text-lg font-medium text-emerald-200"
               >
-                Your gratitude is on its way...
+                They showed up when it mattered...
               </motion.p>
               <motion.p
                 initial={{ opacity: 0, y: 10 }}
@@ -372,7 +372,7 @@ export function ThankYouPage() {
                 transition={{ duration: 0.42, delay: 0.7, ease: EASE_OUT }}
                 className="text-2xl font-extrabold tracking-tight text-white sm:text-3xl"
               >
-                ...blooming just for them 🌿
+                ...now let them know you see it 🌸
               </motion.p>
             </div>
 
@@ -393,7 +393,7 @@ export function ThankYouPage() {
                 transition={{ type: "spring", stiffness: 280, damping: 20 }}
                 className="inline-flex min-h-[54px] touch-manipulation items-center gap-2.5 rounded-full border border-emerald-300/40 bg-white/10 px-10 py-4 text-base font-semibold text-white backdrop-blur-sm transition-colors hover:bg-white/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300/60 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent"
               >
-                <span>Send your thanks</span>
+                <span>Let them know</span>
                 <span aria-hidden>🌸</span>
               </motion.button>
             </motion.div>

@@ -477,7 +477,7 @@ export function CongratulationsPage() {
                 transition={{ delay: 0.25, duration: 0.4, ease: EASE_OUT }}
                 className="text-lg font-semibold text-violet-200 sm:text-xl"
               >
-                Time to celebrate...
+                You set your sights on something...
               </motion.p>
               <motion.p
                 initial={{ opacity: 0, y: 8 }}
@@ -485,7 +485,7 @@ export function CongratulationsPage() {
                 transition={{ delay: 0.42, duration: 0.4, ease: EASE_OUT }}
                 className="text-base text-indigo-300/80 sm:text-lg"
               >
-                ...make some noise! 🎊
+                ...and you went and did it 🎉
               </motion.p>
             </div>
 
