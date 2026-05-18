@@ -1,52 +1,98 @@
-# How to customize this Valentine template
+# Customizing Wishing Cards
 
-All customer-facing copy, names, and image paths live in **one file** so you or your buyers can rebrand without touching the rest of the code.
+All user-facing content lives under `config/`. Edit those files; you usually don't need to touch components.
 
-## 1. Open the config file
+## 1. Landing page tiles — `config/occasions.ts`
 
-Edit **`config/valentine.ts`**.
+This file controls the grid on `/`. Each entry:
 
-## 2. What you can change
+| Field | Purpose |
+|---|---|
+| `name` | Tile title (e.g. "Valentine's Day") |
+| `slug` | URL segment, e.g. `valentines` → `/valentines` |
+| `description` | Tile subtitle |
+| `icon` | A `lucide-react` icon component |
+| `gradient` | Tailwind gradient classes for the tile icon and stub-page hero |
+| `bgGradient` | Tailwind gradient classes for the tile hover background |
+| `implemented` | `true` if the route is a real card, `false` for a "Coming soon" stub |
+
+Add, remove, or reorder entries to change the landing page. Removing a tile does **not** remove the route — delete `app/{slug}/page.tsx` separately if you want a real 404.
+
+## 2. Valentine card — `config/valentine.ts`
+
+The Valentine page reads everything from this single file.
+
+### Site / SEO
 
 | Field | What it does |
-|-------|----------------|
-| **site.title** | Browser tab title and SEO title |
-| **site.description** | Meta description for SEO |
-| **site.favicon** | Path to favicon image (e.g. `/my-icon.png`) |
-| **site.url** | Full site URL (e.g. `"https://yoursite.com"`) for canonical and Open Graph |
-| **site.ogImage** | Absolute or path to share image (e.g. `"/og.png"` or full URL) for social previews |
-| **site.keywords** | Array of SEO keywords (e.g. `["valentine", "proposal"]`) |
-| **senderName** | Your name — used in the success message and “With love, …” |
-| **eyebrow** | Short line under the headline (e.g. `"February 14 · Just Us"`) |
-| **headline.line1** | First line of the main question (e.g. `"Will you be"`) |
-| **headline.line2** | Second line (e.g. `"my Valentine?"`) |
-| **promise** | The paragraph above the Yes/No buttons |
-| **noButtonMessages** | Array of 5 messages when the user clicks “No” |
-| **success.headline** | Title on the success screen (e.g. `"You said yes!"`) |
-| **success.message** | Invite paragraph. Use `{senderName}` and it will be replaced with **senderName** (e.g. “from Rushi”). |
-| **success.signature** | Sign-off (e.g. `"With love"` or `"With love, {senderName}"` to include your name) |
-| **images.cornerCat** | Image path for the top-right cat (question + success) |
-| **images.cryingCat** | GIF shown when the user clicks “No” |
-| **images.huggingCat** | GIF shown when the user clicks “Yes” |
-| **backgroundMusic** | Path to MP3 (e.g. `"/music.mp3"`) or `null` to hide the music toggle |
+|---|---|
+| `site.title` | Browser tab title and SEO title |
+| `site.description` | Meta description |
+| `site.favicon` | Favicon path |
+| `site.url` | Full site URL for canonical and Open Graph |
+| `site.ogImage` | Share image path or URL |
+| `site.keywords` | SEO keywords array |
 
-## 3. Images
+### Card copy
 
-- Put your images in the **`public/`** folder.
-- In config, use paths starting with `/`, e.g. `/crying_cat.gif`, `/my-photo.png`.
+| Field | What it does |
+|---|---|
+| `senderName` | Your name. Used wherever `{senderName}` appears |
+| `eyebrow` | Small line above the headline (e.g. "February 14 · Just Us") |
+| `headline.line1` / `headline.line2` | The two-line question |
+| `promise` | Paragraph above the Yes/No buttons |
+| `noButtonMessages` | Array of 5 escalating messages for repeat "No" clicks |
+| `success.headline` | Success-screen title |
+| `success.message` | Success-screen body. Use `{senderName}` to interpolate |
+| `success.signature` | Sign-off, e.g. `"With love, {senderName}"` |
 
-## 4. URL parameters
+### Assets
 
-You can override the **recipient** and **sender** via the URL so one deployment can serve many links:
+| Field | What it does |
+|---|---|
+| `images.cornerCat` | Top-right cat (question + success screens) |
+| `images.cryingCat` | GIF shown after the first "No" click |
+| `images.huggingCat` | GIF shown on the success screen |
+| `backgroundMusic` | Path to MP3, or `null` to hide the music toggle |
 
-- **`?name=Jane`** — Uses “Jane” as the recipient (headline, success headline, and meta).
-- **`?sender=Rushi`** — Uses “Rushi” wherever the sender name appears (e.g. in the success message and “With love, {senderName}”). If omitted, the value from **senderName** in config is used.
+Place all assets in `public/` and reference them with a leading slash (e.g. `/crying_cat.gif`).
 
-Example: `https://yoursite.com?name=Jane&sender=Rushi`
+## 3. URL parameters
 
-## 5. Reselling
+You don't need separate deployments per recipient — use query strings:
 
-- Give buyers **only** `config/valentine.ts` (and optionally this CUSTOMIZATION.md) as the “edit this to customize” surface.
-- They don’t need to touch components or layout; everything reads from this config.
+| Param | Example | Effect |
+|---|---|---|
+| `name` | `?name=Jane` | Recipient name in headline, success line, and metadata |
+| `sender` | `?sender=Rushi` | Overrides `senderName` for this link |
 
-No need to pay me more money — just edit the config and sell the template. Good luck.
+Combine them: `/valentines?name=Jane&sender=Rushi`.
+
+## 4. Theming
+
+Theme colour tokens live in `app/globals.css` under `:root` and `.dark`. Edit those CSS variables to rebrand without hunting through components.
+
+| Token | Used for |
+|---|---|
+| `--background` / `--foreground` | Body bg + text |
+| `--surface` | Card backgrounds (where used via tokens) |
+| `--primary` / `--primary-soft` | Brand colour (Icon primitive, theme accents) |
+| `--secondary`, `--success`, `--danger`, `--warning` | Icon variant colours |
+
+The theme picker writes `light` or `dark` to `<html>` and persists in `localStorage["valentine-theme"]`. First-paint colours are set by an inline script in `app/layout.tsx`, so there's no flash on refresh.
+
+## 5. Adding a real occasion (replacing a "Coming soon" stub)
+
+The 6 non-Valentine routes are stub pages today. To upgrade one:
+
+1. **Create the config:** `config/{slug}.ts`. The simplest path is to copy `config/valentine.ts` and adapt copy + assets.
+2. **Replace the page:** Edit `app/{slug}/page.tsx` so it renders a real card. The easiest pattern is to clone `components/ValentinePage.tsx` into `components/{Slug}Page.tsx` and have it read from your new config.
+3. **Mark it live:** In `config/occasions.ts`, flip `implemented: true` for that slug — the tile's CTA changes from "Coming soon" to "Create card".
+
+If you build several occasions, factor the shared card UI into a generic `OccasionPage` component that accepts the occasion's config as a prop, and reduce per-occasion files to thin wrappers.
+
+## 6. Reselling
+
+Hand buyers `config/occasions.ts` + `config/{occasion}.ts` files + this CUSTOMIZATION.md. They never need to touch components or routes.
+
+No need to pay attribution — MIT license, see `LICENSE`.

@@ -1,9 +1,14 @@
 "use client";
 
+import { notFound } from "next/navigation";
 import Icon from "@/components/ui/Icon";
 import { Heart, Check, X, AlertTriangle, Star, Settings, User, Home, Menu } from "lucide-react";
 
 export default function PreviewPage() {
+  if (process.env.NODE_ENV === "production") {
+    notFound();
+  }
+
   return (
     <main className="min-h-screen bg-[var(--background)] p-8">
       <h1 className="text-3xl font-bold mb-8 text-[var(--foreground)]">

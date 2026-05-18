@@ -18,8 +18,8 @@ const COLOR_PAIRS = [
   { bg: "bg-pink-500", text: "text-white" },
   { bg: "bg-red-500", text: "text-white" },
   { bg: "bg-fuchsia-500", text: "text-white" },
-  { bg: "bg-magenta-500", text: "text-white" },
-  { bg: "bg-coral-500", text: "text-white" },
+  { bg: "bg-rose-600", text: "text-white" },
+  { bg: "bg-orange-500", text: "text-white" },
 ] as const;
 
 function getInitials(name: string): string {

@@ -212,13 +212,13 @@ function CelebrationOverlayComponent({ cornerCatSrc, huggingCatSrc }: Props) {
       aria-hidden
     >
       <motion.div
-        className="absolute inset-0 bg-linear-to-br from-rose-400/20 via-pink-300/15 to-rose-500/25"
+        className="absolute inset-0 bg-linear-to-br from-rose-400/20 via-pink-300/15 to-rose-500/25 dark:from-rose-700/30 dark:via-pink-600/20 dark:to-rose-800/35"
         initial={{ scale: 0.8, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
       />
       <motion.div
-        className="absolute inset-0 bg-[radial-gradient(ellipse_80%_80%_at_50%_50%,rgba(255,255,255,0.4),transparent_60%)]"
+        className="absolute inset-0 bg-[radial-gradient(ellipse_80%_80%_at_50%_50%,rgba(255,255,255,0.4),transparent_60%)] dark:bg-[radial-gradient(ellipse_80%_80%_at_50%_50%,rgba(15,23,42,0.5),transparent_60%)]"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.6 }}

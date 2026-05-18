@@ -1,112 +1,106 @@
-# Will You Be My Valentine? — Premium Template
+# Wishing Cards — Multi-Occasion Wishing Platform
 
-A **production-ready, animated Valentine’s Day landing page** built for resale or your own proposal. One question, two buttons, and a memorable “Yes” moment—fully customizable from a single config file. No design or coding required to rebrand.
+A **production-ready, animated wishing-cards platform** built for resale or your own occasions. Pick an occasion at `/`, personalize it, share the link. Currently ships with a fully-featured **Valentine's Day** card; six other occasions (Birthday, Anniversary, Graduation, Thank You, Get Well, Congratulations) ship as "Coming soon" stubs ready for you to extend.
 
 ---
 
 ## Why this template
 
-- **One-file customization** — All copy, names, images, and SEO live in `config/valentine.ts`. Your buyers (or you) never need to touch components.
-- **Built to sell** — Clean structure, clear docs, and optional background music and SEO so you can offer it as a product or a custom-order service.
-- **Modern stack** — Next.js (App Router), Tailwind CSS, Framer Motion. Fast, maintainable, and easy to deploy on Vercel or Netlify.
+- **Config-driven** — Each occasion is defined in `config/occasions.ts`. Per-occasion content lives in its own config file (e.g. `config/valentine.ts`).
+- **Polished animations** — Framer Motion entrance + interactions, confetti on "Yes", floating hearts background, runaway "No" button.
+- **Built to sell or extend** — Add a new occasion by dropping a route under `app/{slug}/page.tsx` and a config file. Clean structure, MIT license, no attribution required.
+- **Dark mode** — Anti-FOUC bootstrap, system-preference fallback, theme persists in `localStorage`.
+- **Modern stack** — Next.js 16 (App Router), React 19, Tailwind CSS 4, Framer Motion. Deploys cleanly on Vercel or Netlify.
 
 ---
 
-## Features
+## Routes
+
+| Path | Status | What it does |
+|---|---|---|
+| `/` | Live | Occasion selector grid |
+| `/valentines` | Live | Animated proposal card with runaway "No" |
+| `/birthday` | Stub | "Coming soon" placeholder |
+| `/anniversary` | Stub | "Coming soon" placeholder |
+| `/graduation` | Stub | "Coming soon" placeholder |
+| `/thank-you` | Stub | "Coming soon" placeholder |
+| `/get-well` | Stub | "Coming soon" placeholder |
+| `/congratulations` | Stub | "Coming soon" placeholder |
+| `/preview` | Dev only | Icon-primitive showcase (404 in production) |
+
+---
+
+## Features (Valentine card)
 
 | Feature | Description |
-|--------|-------------|
-| **Animated question card** | Smooth entrance, floating hearts background, and soft shadows. |
-| **Yes / No buttons** | No button runs away on hover (desktop) and on touch (mobile). Yes button grows with each “No” click; card can expand to fit. |
-| **Crying cat** | Optional GIF above the promise text when they click “No.” |
-| **Celebration overlay** | Full-screen overlay with floating cats and confetti when they click “Yes.” |
-| **Success screen** | Hugging cat GIF, custom headline, message, and signature (e.g. “With love” or “With love, {senderName}”). |
-| **Optional background music** | Toggle (off by default). Set an MP3 path in config or `null` to hide. |
-| **Personalized links** | Use `?name=Jane` so the headline and success text use the recipient’s name. |
-| **SEO & sharing** | Meta title/description, Open Graph, Twitter cards, optional canonical URL and OG image. Dynamic metadata for `?name=` links. |
-| **Responsive & touch-friendly** | Layout and tap targets tuned for small screens; No button movement works with touch events. |
-| **No env vars** | Everything is driven by the config file—ideal for static or serverless deploy. |
+|---|---|
+| **Animated question card** | Smooth entrance, floating hearts, soft shadows |
+| **Yes / No buttons** | No button runs away on hover/touch. Yes button grows with each "No" click; card can expand to fit |
+| **Crying cat** | Optional GIF above the promise text when they click "No" |
+| **Celebration overlay** | Full-screen overlay with floating cats and confetti when they click "Yes" |
+| **Success screen** | Hugging cat GIF, custom headline, message, and signature |
+| **Optional background music** | Toggle (off by default). Set an MP3 path in config or `null` to hide |
+| **Personalized links** | `?name=Jane` and `?sender=Rushi` |
+| **SEO & sharing** | Open Graph, Twitter cards, dynamic metadata for `?name=` links |
+| **Responsive & touch-friendly** | 48px tap targets, safe-area insets honoured |
+| **No env vars** | Everything is driven by config files |
 
 ---
 
 ## Tech stack
 
-- **Next.js 16** (App Router)
-- **React 19**
-- **Tailwind CSS 4**
-- **Framer Motion** (animations)
-- **canvas-confetti** (celebration effect)
-- **TypeScript**
+- Next.js 16 (App Router) · React 19 · TypeScript 5 · Tailwind CSS 4
+- Framer Motion (animations) · canvas-confetti (celebration) · lucide-react (icons)
+- Vitest + Testing Library (Icon primitive tests)
 
 ---
 
 ## Setup
 
-**Requirements:** Node.js 18+
-
 ```bash
-# Clone or download the template
 git clone <your-repo-url>
 cd will-you-be-my-valentine
-
-# Install dependencies
 npm install
-
-# Run locally
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000).  
-Use [http://localhost:3000?name=Jane](http://localhost:3000?name=Jane) to see the personalized version.
+- `http://localhost:3000` — occasion selector
+- `http://localhost:3000/valentines?name=Jane` — personalized Valentine card
 
 ---
 
-## Customization guide
+## Customization (high level)
 
-All customer-facing content and assets are controlled from **one file:** `config/valentine.ts`.
+All customer-facing content lives in `config/`. See **CUSTOMIZATION.md** for the full field-by-field reference.
 
-### 1. Copy and branding
+- **`config/occasions.ts`** — list of occasions shown on the landing page. Edit to add/remove tiles or change gradients & icons.
+- **`config/valentine.ts`** — every string and image path on the Valentine card. Edit for your own copy, recipient defaults, or assets.
 
-| Config field | Purpose |
-|-------------|--------|
-| `site.title` | Browser tab and default SEO title |
-| `site.description` | Meta description |
-| `site.favicon` | Favicon path (e.g. `/favicon.ico`) |
-| `site.url` | Full site URL for canonical and Open Graph (e.g. `"https://yoursite.com"`) |
-| `site.ogImage` | Share image path or URL for social previews |
-| `site.keywords` | SEO keywords array |
-| `senderName` | Your name (used where `{senderName}` appears in message/signature) |
-| `eyebrow` | Short line under the main headline |
-| `headline.line1` / `headline.line2` | Main question (e.g. “Will you be” / “my Valentine?”) |
-| `promise` | Paragraph above the Yes/No buttons |
-| `noButtonMessages` | Array of 5 messages when the user clicks “No” (e.g. “Are you sure?”, “Really sure?”, …) |
-| `success.headline` | Title on the success screen |
-| `success.message` | Body text (use `{senderName}` to insert your name) |
-| `success.signature` | Sign-off, e.g. `"With love"` or `"With love, {senderName}"` |
+Place images and audio in `public/` and reference them with a leading slash (e.g. `/crying_cat.gif`).
 
-### 2. Images and music
-
-| Config field | Purpose |
-|-------------|--------|
-| `images.cornerCat` | Image path for the top-right cat (question + success screens) |
-| `images.cryingCat` | GIF shown when the user clicks “No” |
-| `images.huggingCat` | GIF shown when the user clicks “Yes” (success screen) |
-| `backgroundMusic` | Path to MP3 (e.g. `"/valentine-music.mp3"`) or `null` to hide the music toggle |
-
-Place all assets in the **`public/`** folder and reference them with a leading slash (e.g. `/crying_cat.gif`).
-
-### 3. Personalized links (query params)
-
-Share a link with optional query parameters to personalize the page:
+### Personalized links
 
 | Parameter | Example | Effect |
-|-----------|---------|--------|
-| `name` | `?name=Jane` | Recipient’s name: headline “Jane, will you be my Valentine?”, success “You said yes, Jane!”, and meta title/description. |
-| `sender` | `?sender=Rushi` | Overrides the sender name for the success message and signature (e.g. “With love, Rushi”). Falls back to `senderName` in config when omitted. |
+|---|---|---|
+| `name` | `?name=Jane` | Recipient's name (headline + success + metadata) |
+| `sender` | `?sender=Rushi` | Overrides the sender name in the success message and signature |
 
-Examples: `https://yoursite.com?name=Jane`, `https://yoursite.com?sender=Rushi`, or `https://yoursite.com?name=Jane&sender=Rushi`. No code changes needed.
+Example: `https://yoursite.com/valentines?name=Jane&sender=Rushi`
 
-For a **full field-by-field reference**, see **CUSTOMIZATION.md**.
+### Adding a new occasion (replacing a stub)
+
+1. Create `config/{slug}.ts` with the same shape as `config/valentine.ts`.
+2. Replace `app/{slug}/page.tsx` to render your real card component (e.g. copy `ValentinePage` and adapt).
+3. Flip `implemented: true` for that slug in `config/occasions.ts`.
+
+---
+
+## Theme
+
+- Light/dark toggle in the header on every card route.
+- Stores choice in `localStorage["valentine-theme"]`.
+- Falls back to system `prefers-color-scheme` on first visit.
+- Theme is applied **before hydration** via an inline script in `app/layout.tsx` — no flash on refresh.
 
 ---
 
@@ -118,58 +112,67 @@ For a **full field-by-field reference**, see **CUSTOMIZATION.md**.
 npm run build
 ```
 
-No environment variables are required; all settings come from `config/valentine.ts`.
+No env vars required.
 
-### Deploy to Vercel
+### Vercel
 
-1. Push the repo to GitHub (or connect your Git provider).
-2. In [Vercel](https://vercel.com), **Add New Project** and import the repo.
-3. Leave build command as `npm run build` and output as default.
-4. Deploy. Your site will be live at `https://your-project.vercel.app`.
+Push to GitHub → Add New Project in Vercel → import the repo → Deploy. Build command stays `npm run build`.
 
-Optional: set **site.url** in config to your production URL and add **site.ogImage** for better link previews.
+### Netlify
 
-### Deploy to Netlify
+Add new site → Import existing project → connect repo → build command `npm run build`. Use Netlify's Next.js runtime.
 
-1. In [Netlify](https://netlify.com), **Add new site** → **Import an existing project** and connect the repo.
-2. Build command: `npm run build`
-3. Publish directory: `.next` (or use the Next.js runtime; follow Netlify’s Next.js docs).
-4. Deploy.
+Set the `site.url` and `site.ogImage` fields in each occasion config for production link previews.
 
-Same as above: set **site.url** and **site.ogImage** in config for production.
+---
 
-### Other hosts
+## Tests
 
-Any host that supports **Next.js** (Node or static export, depending on your setup) will work. Run `npm run build` and use the framework’s recommended run or export steps.
+```bash
+npm test
+```
+
+Vitest + jsdom + Testing Library. The Icon primitive has full coverage (22 tests). Card-level tests are tracked as a follow-up.
 
 ---
 
 ## Project structure
 
 ```
-├── app/
-│   ├── layout.tsx      # Root layout, metadata, fonts
-│   ├── page.tsx        # Home page, dynamic metadata for ?name=
-│   └── globals.css     # Global styles
-├── components/
-│   ├── ValentinePage.tsx   # Main page logic (question, buttons, success)
-│   ├── FloatingHearts.tsx  # Background hearts
-│   └── CelebrationOverlay.tsx  # Full-screen celebration (floating cats + confetti)
-├── config/
-│   └── valentine.ts    # Single file to customize for resale or use
-├── public/             # Favicon, images, GIFs, optional MP3
-├── CUSTOMIZATION.md    # Detailed config reference
-└── README.md           # This file
+app/
+  page.tsx                  Occasion selector landing
+  layout.tsx                Root layout, theme bootstrap, metadata
+  globals.css               Tailwind 4 + theme tokens
+  valentines/page.tsx       Valentine route
+  birthday|anniversary|graduation|
+    thank-you|get-well|congratulations/page.tsx   Stubs
+  preview/page.tsx          Icon showcase (dev only)
+
+components/
+  ValentinePage.tsx         Valentine card logic
+  ComingSoon.tsx            Stub-page UI
+  Header.tsx                Fixed nav + theme toggle
+  Avatar.tsx                Initials avatar
+  FloatingHearts.tsx        Background hearts
+  CelebrationOverlay.tsx    "Yes" overlay
+  ui/Icon/                  Icon primitive + tests
+
+config/
+  occasions.ts              Landing page occasion list
+  valentine.ts              Valentine copy + assets
+
+hooks/
+  useTheme.ts               Theme state + toggle
 ```
 
 ---
 
 ## License
 
-MIT (or your chosen license for resale). Use and sell as you like; no attribution required.
+MIT. See `LICENSE`. Use, modify, and resell freely; no attribution required.
 
 ---
 
 ## Support
 
-For detailed config options and reselling tips, see **CUSTOMIZATION.md**.
+For the full config reference, see **CUSTOMIZATION.md**.
