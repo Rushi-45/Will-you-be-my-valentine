@@ -15,7 +15,20 @@ import { AnimatedHeadline } from "@/components/AnimatedHeadline";
 const EASE = [0.16, 1, 0.3, 1] as const;
 const EASE_OUT = [0.4, 0, 0.2, 1] as const;
 
-type Phase = "sealed" | "opening" | "revealed";
+type Phase = "sealed" | "opening" | "sending" | "revealed";
+
+// Deterministic floating hearts for the sending screen
+const FLOAT_HEARTS = Array.from({ length: 22 }, (_, i) => ({
+  id: i,
+  x: (i * 47 + 13) % 90 + 5,
+  y: (i * 37 + 7) % 82 + 5,
+  size: 11 + (i % 4) * 4,
+  color: ["#c084fc", "#e879f9", "#f0abfc", "#a855f7", "#d946ef"][i % 5],
+  baseOpacity: 0.22 + (i % 5) * 0.08,
+  delay: (i % 9) * 0.28,
+  duration: 2.2 + (i % 5) * 0.5,
+  floatY: 12 + (i % 4) * 6,
+}));
 
 // ─── helpers ──────────────────────────────────────────────────────────────────
 
@@ -46,12 +59,7 @@ const Envelope = memo(function Envelope({
       onClick={onOpen}
       disabled={isOpen}
       aria-label="Open the anniversary envelope"
-      // Gentle float while sealed
-      animate={
-        !isOpen
-          ? { y: [0, -7, 0] }
-          : { y: 0 }
-      }
+      animate={!isOpen ? { y: [0, -7, 0] } : { y: 0 }}
       transition={
         !isOpen
           ? { duration: 3.2, repeat: Infinity, ease: "easeInOut" }
@@ -59,32 +67,27 @@ const Envelope = memo(function Envelope({
       }
       whileHover={!isOpen ? { scale: 1.03 } : {}}
       whileTap={!isOpen ? { scale: 0.98 } : {}}
-      className="relative cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400/60 focus-visible:ring-offset-4 rounded-xl disabled:cursor-default"
+      className="relative cursor-pointer rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400/60 focus-visible:ring-offset-4 disabled:cursor-default"
       style={{ perspective: "900px" }}
     >
-      {/* ── Envelope body ── */}
+      {/* Envelope body */}
       <div className="relative h-48 w-72 overflow-hidden rounded-b-2xl shadow-[0_8px_32px_-8px_rgba(147,51,234,0.25)] sm:h-52 sm:w-80 dark:shadow-[0_8px_32px_-8px_rgba(147,51,234,0.4)]">
-        {/* Base fill */}
         <div className="absolute inset-0 bg-linear-to-br from-purple-100 to-fuchsia-100 dark:from-purple-900/70 dark:to-fuchsia-900/70" />
-
-        {/* Left triangle fold */}
         <div
           className="absolute inset-0 bg-purple-200/70 dark:bg-purple-700/50"
           style={{ clipPath: "polygon(0% 0%, 50% 52%, 0% 100%)" }}
         />
-        {/* Right triangle fold */}
         <div
           className="absolute inset-0 bg-fuchsia-200/70 dark:bg-fuchsia-700/50"
           style={{ clipPath: "polygon(100% 0%, 50% 52%, 100% 100%)" }}
         />
-        {/* Bottom V-fold */}
         <div
           className="absolute inset-0 bg-purple-300/50 dark:bg-purple-600/40"
           style={{ clipPath: "polygon(0% 100%, 50% 52%, 100% 100%)" }}
         />
       </div>
 
-      {/* ── Flap (rotates open around top edge) ── */}
+      {/* Flap */}
       <motion.div
         className="absolute left-0 right-0 top-0 z-10 overflow-hidden"
         style={{
@@ -96,10 +99,7 @@ const Envelope = memo(function Envelope({
         animate={{ rotateX: isOpen ? -175 : 0 }}
         transition={{ duration: 0.65, ease: EASE }}
       >
-        {/* Flap fill — slightly darker than body */}
         <div className="absolute inset-0 bg-linear-to-b from-purple-200 to-fuchsia-300 dark:from-purple-700 dark:to-fuchsia-800" />
-
-        {/* Wax seal — fades out as flap opens */}
         <AnimatePresence>
           {!isOpen && (
             <motion.div
@@ -172,16 +172,45 @@ export function AnniversaryPage() {
   const handleOpenEnvelope = useCallback(() => {
     if (phase !== "sealed") return;
     setPhase("opening");
-
-    // Flap animation takes 0.65s; wait a beat then reveal
-    setTimeout(async () => {
-      setPhase("revealed");
-      const { default: confetti } = await import("canvas-confetti");
-      const colors = ["#9333ea", "#d946ef", "#f472b6", "#c4b5fd", "#ffffff", "#fbbf24"];
-      confetti({ particleCount: 55, spread: 75, origin: { x: 0.28, y: 0.5 }, colors, startVelocity: 40 });
-      confetti({ particleCount: 55, spread: 75, origin: { x: 0.72, y: 0.5 }, colors, startVelocity: 40 });
-    }, 1050);
+    // After flap opens, move to the sending interstitial
+    setTimeout(() => setPhase("sending"), 1050);
   }, [phase]);
+
+  const handleSendLove = useCallback(async () => {
+    const { default: confetti } = await import("canvas-confetti");
+    const colors = [
+      "#9333ea",
+      "#d946ef",
+      "#f472b6",
+      "#c4b5fd",
+      "#ffffff",
+      "#fbbf24",
+    ];
+    confetti({
+      particleCount: 65,
+      spread: 85,
+      origin: { x: 0.28, y: 0.45 },
+      colors,
+      startVelocity: 44,
+    });
+    confetti({
+      particleCount: 65,
+      spread: 85,
+      origin: { x: 0.72, y: 0.45 },
+      colors,
+      startVelocity: 44,
+    });
+    setTimeout(() => {
+      confetti({
+        particleCount: 50,
+        spread: 100,
+        origin: { x: 0.5, y: 0.35 },
+        colors,
+        startVelocity: 52,
+      });
+    }, 200);
+    setPhase("revealed");
+  }, []);
 
   const handleCopyLink = useCallback(() => {
     if (!shareUrl) return;
@@ -198,7 +227,7 @@ export function AnniversaryPage() {
 
   return (
     <div className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden bg-purple-50/60 pb-20 pl-[max(1rem,env(safe-area-inset-left))] pr-[max(1rem,env(safe-area-inset-right))] pt-16 text-stone-800 sm:px-5 sm:pb-24 sm:pt-20 dark:bg-slate-950/70 dark:text-slate-100">
-      {/* Ambient glow rings — purple palette */}
+      {/* Ambient glow rings */}
       <div
         className="pointer-events-none fixed inset-0 z-0 flex items-center justify-center overflow-hidden"
         aria-hidden
@@ -209,12 +238,72 @@ export function AnniversaryPage() {
             className="absolute rounded-full border border-purple-300/20 dark:border-purple-700/20"
             style={{ width: size, height: size }}
             animate={{ scale: [1, 1.06, 1], opacity: [0.6, 0.1, 0.6] }}
-            transition={{ duration: 3.8, delay: i * 0.9, repeat: Infinity, ease: "easeInOut" }}
+            transition={{
+              duration: 3.8,
+              delay: i * 0.9,
+              repeat: Infinity,
+              ease: "easeInOut",
+            }}
           />
         ))}
       </div>
 
-      {/* Floating back link */}
+      {/* ── Sending overlay + hearts (fixed, outside AnimatePresence) ── */}
+      <AnimatePresence>
+        {phase === "sending" && (
+          <>
+            <motion.div
+              key="send-backdrop"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.5 }}
+              className="pointer-events-none fixed inset-0 z-20 bg-gradient-to-b from-rose-950/96 via-purple-950/92 to-fuchsia-950/96"
+            />
+            <motion.div
+              key="heart-field"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.55, delay: 0.1 }}
+              className="pointer-events-none fixed inset-0 z-20 overflow-hidden"
+            >
+              {FLOAT_HEARTS.map((h) => (
+                <motion.span
+                  key={h.id}
+                  className="absolute select-none"
+                  style={{
+                    left: `${h.x}%`,
+                    top: `${h.y}%`,
+                    fontSize: h.size,
+                    color: h.color,
+                    opacity: h.baseOpacity,
+                  }}
+                  animate={{
+                    y: [-h.floatY, 0, -h.floatY],
+                    opacity: [
+                      h.baseOpacity * 0.4,
+                      h.baseOpacity,
+                      h.baseOpacity * 0.4,
+                    ],
+                    scale: [0.88, 1.08, 0.88],
+                  }}
+                  transition={{
+                    duration: h.duration,
+                    delay: h.delay,
+                    repeat: Infinity,
+                    ease: "easeInOut",
+                  }}
+                >
+                  ♥
+                </motion.span>
+              ))}
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
+      {/* Back link */}
       <div className="fixed left-4 top-4 z-40 sm:left-6 sm:top-6">
         <Link
           href="/"
@@ -225,22 +314,27 @@ export function AnniversaryPage() {
         </Link>
       </div>
 
-      {/* Floating theme toggle */}
+      {/* Theme toggle */}
       <div className="fixed right-4 top-4 z-40 sm:right-6 sm:top-6">
         <ThemeToggle variant="floating" />
       </div>
 
       <AnimatePresence mode="wait">
-        {phase !== "revealed" ? (
+        {/* ── Phase 1 + 2: Envelope (sealed → opening) ── */}
+        {(phase === "sealed" || phase === "opening") && (
           <motion.div
             key="envelope-view"
             initial={{ opacity: 0, y: 32, filter: "blur(10px)" }}
             animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-            exit={{ opacity: 0, scale: 0.96, y: -12, transition: { duration: 0.32, ease: EASE_OUT } }}
+            exit={{
+              opacity: 0,
+              scale: 0.96,
+              y: -12,
+              transition: { duration: 0.32, ease: EASE_OUT },
+            }}
             transition={{ duration: 0.52, ease: EASE }}
             className="flex flex-col items-center gap-6 text-center"
           >
-            {/* Eyebrow */}
             <motion.p
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
@@ -250,14 +344,12 @@ export function AnniversaryPage() {
               {eyebrow}
             </motion.p>
 
-            {/* Headline */}
             <AnimatedHeadline
               words={headlineWords}
               className="max-w-lg bg-linear-to-br from-purple-700 via-fuchsia-600 to-purple-800 bg-clip-text text-[1.75rem] font-extrabold leading-tight tracking-tight text-transparent sm:text-4xl md:text-[2.75rem]"
               ariaLabel={headlineWords.join(" ")}
             />
 
-            {/* Envelope */}
             <motion.div
               initial={{ opacity: 0, scale: 0.88, y: 16 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -266,7 +358,6 @@ export function AnniversaryPage() {
               <Envelope phase={phase} onOpen={handleOpenEnvelope} />
             </motion.div>
 
-            {/* Hint */}
             <AnimatePresence>
               {phase === "sealed" && (
                 <motion.p
@@ -281,7 +372,80 @@ export function AnniversaryPage() {
               )}
             </AnimatePresence>
           </motion.div>
-        ) : (
+        )}
+
+        {/* ── Phase 3: Sending interstitial ── */}
+        {phase === "sending" && (
+          <motion.div
+            key="sending-screen"
+            initial={{ opacity: 0, scale: 0.92 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 1.06, transition: { duration: 0.3 } }}
+            transition={{ duration: 0.45, delay: 0.2, ease: EASE }}
+            className="relative z-30 flex flex-col items-center gap-7 text-center"
+          >
+            {/* Pulsing heart */}
+            <div className="relative">
+              <motion.div
+                className="pointer-events-none absolute left-1/2 top-1/2 h-28 w-28 -translate-x-1/2 -translate-y-1/2 rounded-full bg-fuchsia-500/20 blur-2xl"
+                animate={{ scale: [1, 1.5, 1], opacity: [0.5, 0.15, 0.5] }}
+                transition={{ duration: 2.4, repeat: Infinity, ease: "easeInOut" }}
+              />
+              <motion.div
+                animate={{ scale: [1, 1.08, 1] }}
+                transition={{ duration: 2.0, repeat: Infinity, ease: "easeInOut" }}
+                className="text-[5.5rem] leading-none sm:text-[6.5rem]"
+              >
+                💜
+              </motion.div>
+            </div>
+
+            {/* Text */}
+            <div className="flex flex-col gap-1.5">
+              <motion.p
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.42, delay: 0.35, ease: EASE_OUT }}
+                className="text-lg font-medium text-purple-200"
+              >
+                Written with love...
+              </motion.p>
+              <motion.p
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.42, delay: 0.7, ease: EASE_OUT }}
+                className="text-2xl font-extrabold tracking-tight text-white sm:text-3xl"
+              >
+                ...and sealed just for you 💌
+              </motion.p>
+            </div>
+
+            {/* Send button */}
+            <motion.div
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.38, delay: 1.3, ease: EASE }}
+            >
+              <motion.button
+                type="button"
+                onClick={handleSendLove}
+                whileHover={{
+                  scale: 1.06,
+                  boxShadow: "0 0 32px 8px rgba(216,180,254,0.2)",
+                }}
+                whileTap={{ scale: 0.96 }}
+                transition={{ type: "spring", stiffness: 280, damping: 20 }}
+                className="inline-flex min-h-[54px] touch-manipulation items-center gap-2.5 rounded-full border border-purple-300/40 bg-white/10 px-10 py-4 text-base font-semibold text-white backdrop-blur-sm transition-colors hover:bg-white/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-300/60 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent"
+              >
+                <span>Send with love</span>
+                <span aria-hidden>💜</span>
+              </motion.button>
+            </motion.div>
+          </motion.div>
+        )}
+
+        {/* ── Phase 4: Success card ── */}
+        {phase === "revealed" && (
           <motion.section
             key="anniversary-success"
             initial={{ opacity: 0, scale: 0.9, y: 24 }}
@@ -296,18 +460,21 @@ export function AnniversaryPage() {
             </div>
 
             <div className="relative z-10 flex flex-col items-center gap-4 sm:gap-5">
-              {/* Heart */}
               <motion.div
                 initial={{ scale: 0, rotate: -15 }}
                 animate={{ scale: 1, rotate: 0 }}
-                transition={{ type: "spring", stiffness: 240, damping: 18, delay: 0.1 }}
+                transition={{
+                  type: "spring",
+                  stiffness: 240,
+                  damping: 18,
+                  delay: 0.1,
+                }}
                 className="text-6xl sm:text-7xl"
                 aria-hidden
               >
                 💜
               </motion.div>
 
-              {/* Headline */}
               <motion.h2
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -317,14 +484,17 @@ export function AnniversaryPage() {
                 {successHeadline}
               </motion.h2>
 
-              {/* Letter lines — staggered reveal */}
               <div className="flex flex-col gap-1.5 text-center">
                 {anniversaryConfig.letterLines.map((line, i) => (
                   <motion.p
                     key={i}
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.42, delay: 0.32 + i * 0.2, ease: EASE_OUT }}
+                    transition={{
+                      duration: 0.42,
+                      delay: 0.32 + i * 0.2,
+                      ease: EASE_OUT,
+                    }}
                     className="text-[0.9375rem] italic leading-[1.7] text-stone-600 dark:text-slate-300"
                   >
                     {line}
@@ -332,21 +502,26 @@ export function AnniversaryPage() {
                 ))}
               </div>
 
-              {/* Additional message */}
               <motion.p
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.32, delay: 0.32 + anniversaryConfig.letterLines.length * 0.2, ease: EASE_OUT }}
+                transition={{
+                  duration: 0.32,
+                  delay: 0.32 + anniversaryConfig.letterLines.length * 0.2,
+                  ease: EASE_OUT,
+                }}
                 className="max-w-md text-balance text-sm leading-[1.65] text-stone-500 dark:text-slate-400"
               >
                 {replaceSenderName(anniversaryConfig.success.message, senderName)}
               </motion.p>
 
-              {/* Signature */}
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                transition={{ duration: 0.32, delay: 0.5 + anniversaryConfig.letterLines.length * 0.2 }}
+                transition={{
+                  duration: 0.32,
+                  delay: 0.5 + anniversaryConfig.letterLines.length * 0.2,
+                }}
                 className="flex items-center justify-center gap-2 text-purple-600 dark:text-purple-400"
               >
                 <Avatar name={senderName} size="sm" />
@@ -355,11 +530,14 @@ export function AnniversaryPage() {
                 </span>
               </motion.div>
 
-              {/* Share buttons */}
               <motion.div
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.32, delay: 0.65 + anniversaryConfig.letterLines.length * 0.2, ease: EASE_OUT }}
+                transition={{
+                  duration: 0.32,
+                  delay: 0.65 + anniversaryConfig.letterLines.length * 0.2,
+                  ease: EASE_OUT,
+                }}
                 className="mt-1 w-full sm:mt-2"
               >
                 <p className="mb-2 text-[0.75rem] font-semibold uppercase tracking-wider text-stone-500 sm:text-[0.8125rem] dark:text-slate-400">
