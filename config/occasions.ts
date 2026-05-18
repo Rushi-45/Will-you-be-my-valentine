@@ -63,7 +63,7 @@ export const occasions: readonly Occasion[] = [
     icon: GraduationCap,
     gradient: "from-amber-500 via-orange-500 to-amber-600",
     bgGradient: "from-amber-50 to-orange-50",
-    implemented: false,
+    implemented: true,
   },
   {
     name: "Thank You",
