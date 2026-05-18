@@ -1,5 +1,24 @@
 @import "tailwindcss";
 
+@layer base {
+  html {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  html::-webkit-scrollbar {
+    width: 0;
+    display: none;
+  }
+  body {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  body::-webkit-scrollbar {
+    width: 0;
+    display: none;
+  }
+}
+
 /* Make Tailwind's `dark:` variant respond to the .dark class on <html>
    (set by hooks/useTheme.ts + the inline bootstrap in app/layout.tsx).
    Without this, `dark:` only fires on prefers-color-scheme: dark. */
