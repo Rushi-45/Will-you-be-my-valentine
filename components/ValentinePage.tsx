@@ -371,7 +371,7 @@ export function ValentinePage() {
         ))}
       </div>
 
-      <Header minimal />
+      <Header minimal recipientName={recipientName} />
 
       {showMusicToggle && (
         <MusicToggle musicOn={musicOn} onToggle={toggleMusic} />
