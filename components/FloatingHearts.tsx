@@ -2,7 +2,7 @@
 
 import { Heart } from "lucide-react";
 import { memo } from "react";
-import { motion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 
 const FLOAT_CONFIG = [
   {
@@ -128,6 +128,8 @@ const FLOAT_CONFIG = [
 ];
 
 function FloatingHeartsComponent() {
+  const reducedMotion = useReducedMotion();
+
   return (
     <div
       className="pointer-events-none absolute inset-0 overflow-hidden"
@@ -142,12 +144,12 @@ function FloatingHeartsComponent() {
             top: config.y,
             opacity: config.opacity,
           }}
-          animate={{
+          animate={reducedMotion ? undefined : {
             y: [0, config.driftY, 0],
             x: [0, config.driftX, 0],
             scale: [1, 1.06, 1],
           }}
-          transition={{
+          transition={reducedMotion ? undefined : {
             duration: config.duration,
             delay: config.delay,
             repeat: Infinity,

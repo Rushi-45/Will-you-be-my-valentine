@@ -21,6 +21,7 @@ import { Avatar } from "@/components/Avatar";
 import { Icon } from "@/components/ui/Icon";
 import { AnimatedHeadline } from "@/components/AnimatedHeadline";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { Tooltip } from "@/components/ui/Tooltip";
 
 const MusicToggle = memo(function MusicToggle({
   musicOn,
@@ -40,13 +41,19 @@ const MusicToggle = memo(function MusicToggle({
         footerVisible ? "bottom-[4.5rem] sm:bottom-20" : "bottom-5 sm:bottom-6"
       }`}
     >
-      <Icon
-        icon={musicOn ? Volume2 : VolumeX}
-        variant="primary"
-        size="lg"
-        onClick={onToggle}
-        aria-label={musicOn ? "Mute background music" : "Play background music"}
-      />
+      <Tooltip
+        label={musicOn ? "Mute music" : "Play background music"}
+        placement="left"
+        delay={300}
+      >
+        <Icon
+          icon={musicOn ? Volume2 : VolumeX}
+          variant="primary"
+          size="lg"
+          onClick={onToggle}
+          aria-label={musicOn ? "Mute background music" : "Play background music"}
+        />
+      </Tooltip>
     </motion.div>
   );
 });
@@ -377,7 +384,7 @@ export function ValentinePage() {
       <div className="fixed left-4 top-4 z-40 sm:left-6 sm:top-6">
         <Link
           href="/"
-          className="inline-flex items-center gap-1.5 rounded-full border border-rose-200/70 bg-white/90 px-3 py-2 text-[0.75rem] font-semibold text-rose-600 shadow-[0_4px_16px_-4px_rgba(190,18,60,0.18)] backdrop-blur-sm transition-colors hover:bg-white dark:border-slate-700 dark:bg-slate-900/80 dark:text-rose-400 dark:hover:bg-slate-900"
+          className="inline-flex cursor-pointer items-center gap-1.5 rounded-full border border-rose-200/70 bg-white/90 px-3 py-2 text-[0.75rem] font-semibold text-rose-600 shadow-[0_4px_16px_-4px_rgba(190,18,60,0.18)] backdrop-blur-sm transition-all duration-200 hover:-translate-y-0.5 hover:bg-white hover:shadow-[0_6px_20px_-4px_rgba(190,18,60,0.28)] active:scale-[0.98] dark:border-slate-700 dark:bg-slate-900/80 dark:text-rose-400 dark:hover:bg-slate-900"
         >
           <Heart className="h-3.5 w-3.5 fill-current" aria-hidden />
           <span>Wishing Cards</span>
@@ -596,26 +603,28 @@ export function ValentinePage() {
                     }}
                     aria-hidden
                   />
-                  <motion.button
-                    type="button"
-                    whileHover={{
-                      scale: isConfettiRunning ? 1 : 1.04,
-                      y: isConfettiRunning ? 0 : -2,
-                      boxShadow:
-                        "0 10px 24px -6px rgba(190, 18, 60, 0.35), 0 0 0 1px rgba(255,255,255,0.25) inset",
-                    }}
-                    whileTap={{
-                      scale: isConfettiRunning ? 1 : 0.98,
-                      y: 0,
-                    }}
-                    transition={{ type: "spring", stiffness: 280, damping: 20 }}
-                    onClick={handleYesClick}
-                    disabled={isConfettiRunning}
-                    className={`inline-flex min-h-[48px] min-w-[140px] touch-manipulation items-center justify-center rounded-full bg-linear-to-r from-rose-500 via-pink-500 to-rose-600 px-8 py-4 text-[0.9375rem] font-semibold text-white shadow-[0_4px_14px_-2px_rgba(190,18,60,0.35)] transition-shadow duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-400/60 focus-visible:ring-offset-2 focus-visible:ring-offset-white active:scale-[0.98] sm:min-h-[48px] sm:min-w-[160px] sm:px-10 sm:py-3.5 ${yesCursorClasses}`}
-                  >
-                    <span className="mr-1.5">Yes</span>
-                    <Heart className="h-5 w-5 fill-current" aria-hidden />
-                  </motion.button>
+                  <Tooltip label="Go on, say yes! 💕" placement="top" delay={400}>
+                    <motion.button
+                      type="button"
+                      whileHover={{
+                        scale: isConfettiRunning ? 1 : 1.04,
+                        y: isConfettiRunning ? 0 : -2,
+                        boxShadow:
+                          "0 10px 24px -6px rgba(190, 18, 60, 0.35), 0 0 0 1px rgba(255,255,255,0.25) inset",
+                      }}
+                      whileTap={{
+                        scale: isConfettiRunning ? 1 : 0.98,
+                        y: 0,
+                      }}
+                      transition={{ type: "spring", stiffness: 280, damping: 20 }}
+                      onClick={handleYesClick}
+                      disabled={isConfettiRunning}
+                      className={`inline-flex min-h-[48px] min-w-[140px] touch-manipulation items-center justify-center rounded-full bg-linear-to-r from-rose-500 via-pink-500 to-rose-600 px-8 py-4 text-[0.9375rem] font-semibold text-white shadow-[0_4px_14px_-2px_rgba(190,18,60,0.35)] transition-shadow duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-400/60 focus-visible:ring-offset-2 focus-visible:ring-offset-white active:scale-[0.98] sm:min-h-[48px] sm:min-w-[160px] sm:px-10 sm:py-3.5 ${yesCursorClasses}`}
+                    >
+                      <span className="mr-1.5">Yes</span>
+                      <Heart className="h-5 w-5 fill-current" aria-hidden />
+                    </motion.button>
+                  </Tooltip>
                 </motion.div>
 
                 {/* V5: No button wrapper rotates and escapes farther with each click */}
@@ -781,7 +790,7 @@ export function ValentinePage() {
                     target="_blank"
                     rel="noopener noreferrer"
                     aria-label="Share on WhatsApp"
-                    className="inline-flex min-h-[48px] shrink-0 touch-manipulation items-center justify-center gap-2 rounded-xl border border-green-200 bg-[#25D366]/10 px-5 py-3 text-[0.9375rem] font-semibold text-[#128C7E] transition-colors hover:bg-[#25D366]/20 active:scale-[0.98] sm:px-6"
+                    className="inline-flex min-h-[48px] shrink-0 cursor-pointer touch-manipulation items-center justify-center gap-2 rounded-xl border border-green-200 bg-[#25D366]/10 px-5 py-3 text-[0.9375rem] font-semibold text-[#128C7E] transition-all duration-200 hover:-translate-y-0.5 hover:bg-[#25D366]/20 hover:shadow-md active:scale-[0.98] sm:px-6"
                   >
                     <MessageCircle className="h-5 w-5 shrink-0" aria-hidden />
                     <span>Share on WhatsApp</span>
@@ -791,8 +800,9 @@ export function ValentinePage() {
                     onClick={handleCopyLink}
                     disabled={!shareUrl}
                     aria-label={copied ? "Link copied" : "Copy link"}
+                    whileHover={{ y: -2 }}
                     whileTap={{ scale: 0.98 }}
-                    className="inline-flex min-h-[48px] shrink-0 touch-manipulation items-center justify-center gap-2 rounded-xl border border-pink-200 bg-pink-50/80 px-5 py-3 text-[0.9375rem] font-semibold text-rose-700 transition-colors hover:bg-pink-100 active:scale-[0.98] disabled:opacity-60 sm:px-6 dark:border-rose-900/40 dark:bg-rose-950/50 dark:text-rose-300 dark:hover:bg-rose-950/70"
+                    className="inline-flex min-h-[48px] shrink-0 cursor-pointer touch-manipulation items-center justify-center gap-2 rounded-xl border border-pink-200 bg-pink-50/80 px-5 py-3 text-[0.9375rem] font-semibold text-rose-700 transition-colors hover:bg-pink-100 active:scale-[0.98] disabled:cursor-default disabled:opacity-60 sm:px-6 dark:border-rose-900/40 dark:bg-rose-950/50 dark:text-rose-300 dark:hover:bg-rose-950/70"
                   >
                     {copied ? (
                       <Check className="h-5 w-5 shrink-0" aria-hidden />
@@ -826,7 +836,7 @@ export function ValentinePage() {
                 href="/"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="group inline-flex min-h-[40px] touch-manipulation items-center justify-center gap-1.5 rounded-full bg-linear-to-r from-rose-500 via-pink-500 to-rose-600 px-4 py-2 text-[0.8125rem] font-semibold text-white shadow-[0_2px_10px_-2px_rgba(190,18,60,0.3)] transition-all duration-200 hover:scale-105 hover:shadow-[0_4px_14px_-2px_rgba(190,18,60,0.4)] hover:brightness-105 active:scale-[0.98] sm:min-h-[42px] sm:px-5 sm:text-sm"
+                className="group inline-flex min-h-[40px] cursor-pointer touch-manipulation items-center justify-center gap-1.5 rounded-full bg-linear-to-r from-rose-500 via-pink-500 to-rose-600 px-4 py-2 text-[0.8125rem] font-semibold text-white shadow-[0_2px_10px_-2px_rgba(190,18,60,0.3)] transition-all duration-200 hover:scale-105 hover:shadow-[0_4px_14px_-2px_rgba(190,18,60,0.4)] hover:brightness-105 active:scale-[0.98] sm:min-h-[42px] sm:px-5 sm:text-sm"
               >
                 <Heart className="h-3.5 w-3.5 shrink-0 fill-current transition-transform duration-200 group-hover:scale-110 sm:h-4 sm:w-4" aria-hidden />
                 <span className="whitespace-nowrap">Create your own card</span>

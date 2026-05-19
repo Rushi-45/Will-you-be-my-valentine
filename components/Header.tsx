@@ -5,6 +5,7 @@ import { memo } from "react";
 import { Heart } from "lucide-react";
 import { Avatar } from "@/components/Avatar";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { Tooltip } from "@/components/ui/Tooltip";
 
 // Add new page routes here as they are created
 const NAV_LINKS: readonly { href: string; label: string }[] = [
@@ -24,7 +25,7 @@ function HeaderComponent({ senderName, recipientName, label }: HeaderProps) {
       <nav className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3 sm:px-6">
         <Link
           href="/"
-          className="group inline-flex items-center gap-2 text-sm font-semibold text-rose-600 transition-colors hover:text-rose-700 dark:text-rose-400 dark:hover:text-rose-300"
+          className="group inline-flex cursor-pointer items-center gap-2 text-sm font-semibold text-rose-600 transition-all duration-150 hover:-translate-y-px hover:text-rose-700 dark:text-rose-400 dark:hover:text-rose-300"
         >
           <Heart
             className="h-4 w-4 fill-current transition-transform group-hover:scale-110"
@@ -56,18 +57,22 @@ function HeaderComponent({ senderName, recipientName, label }: HeaderProps) {
           )}
 
           {senderName && (
-            <Avatar
-              name={senderName}
-              size="sm"
-              className="hidden sm:inline-flex"
-            />
+            <Tooltip label={`From ${senderName}`} placement="bottom">
+              <Avatar
+                name={senderName}
+                size="sm"
+                className="hidden sm:inline-flex"
+              />
+            </Tooltip>
           )}
           {recipientName && (
-            <Avatar
-              name={recipientName}
-              size="sm"
-              className="hidden sm:inline-flex"
-            />
+            <Tooltip label={`For ${recipientName}`} placement="bottom">
+              <Avatar
+                name={recipientName}
+                size="sm"
+                className="hidden sm:inline-flex"
+              />
+            </Tooltip>
           )}
           <ThemeToggle variant="inline" />
         </div>

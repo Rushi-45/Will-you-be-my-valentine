@@ -9,6 +9,7 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 import { ParallaxHero } from "@/components/ParallaxHero";
 import { CigaretteScroll } from "@/components/CigaretteScroll";
 import { occasions } from "@/config/occasions";
+import { Tooltip } from "@/components/ui/Tooltip";
 
 export async function generateMetadata(): Promise<Metadata> {
   return {
@@ -132,7 +133,7 @@ export default function Home() {
                   <Link
                     key={occasion.slug}
                     href={`/${occasion.slug}`}
-                    className="group inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-medium text-slate-400 transition-all hover:border-white/20 hover:bg-white/10 hover:text-white"
+                    className="group inline-flex cursor-pointer items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-medium text-slate-400 transition-all hover:border-white/20 hover:bg-white/10 hover:text-white"
                   >
                     <Icon className="h-3 w-3" aria-hidden />
                     {occasion.name}
@@ -147,15 +148,17 @@ export default function Home() {
             <p className="text-xs text-slate-500">
               © {new Date().getFullYear()} Wishing Cards · MIT licensed
             </p>
-            <a
-              href="https://www.instagram.com/rushiii.js"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="group inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs font-semibold text-slate-300 transition-all hover:border-rose-500/40 hover:bg-rose-500/10 hover:text-rose-300"
-            >
-              <Instagram className="h-3.5 w-3.5" aria-hidden />
-              @rushiii.js
-            </a>
+            <Tooltip label="Follow on Instagram" placement="top">
+              <a
+                href="https://www.instagram.com/rushiii.js"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="group inline-flex cursor-pointer items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs font-semibold text-slate-300 transition-all hover:border-rose-500/40 hover:bg-rose-500/10 hover:text-rose-300"
+              >
+                <Instagram className="h-3.5 w-3.5" aria-hidden />
+                @rushiii.js
+              </a>
+            </Tooltip>
             <p className="text-xs text-slate-500">
               Made with <Heart className="inline h-3 w-3 fill-rose-500 text-rose-500" aria-hidden /> for every occasion
             </p>
