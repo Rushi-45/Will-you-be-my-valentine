@@ -4,6 +4,7 @@ import { memo } from "react";
 import { motion } from "framer-motion";
 import { Moon, Sun } from "lucide-react";
 import { useTheme } from "@/hooks/useTheme";
+import { Tooltip } from "@/components/ui/Tooltip";
 
 type Variant = "inline" | "floating";
 
@@ -40,28 +41,33 @@ export const ThemeToggle = memo(function ThemeToggle({
   const isDark = theme === "dark";
 
   return (
-    <motion.button
-      type="button"
-      onClick={(event) => {
-        const rect = event.currentTarget.getBoundingClientRect();
-        toggleTheme({
-          x: rect.left + rect.width / 2,
-          y: rect.top + rect.height / 2,
-        });
-      }}
-      whileTap={{ scale: 0.94 }}
-      whileHover={{ scale: 1.05 }}
-      aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
-      className={`inline-flex items-center justify-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-400/60 ${VARIANT_CLASSES[variant]}`}
+    <Tooltip
+      label={isDark ? "Switch to light mode" : "Switch to dark mode"}
+      placement={variant === "floating" ? "left" : "bottom"}
     >
-      {isDark ? (
-        <Sun className={`${ICON_SIZE[variant]} text-amber-400`} aria-hidden />
-      ) : (
-        <Moon
-          className={`${ICON_SIZE[variant]} text-slate-600`}
-          aria-hidden
-        />
-      )}
-    </motion.button>
+      <motion.button
+        type="button"
+        onClick={(event) => {
+          const rect = event.currentTarget.getBoundingClientRect();
+          toggleTheme({
+            x: rect.left + rect.width / 2,
+            y: rect.top + rect.height / 2,
+          });
+        }}
+        whileTap={{ scale: 0.94 }}
+        whileHover={{ scale: 1.05 }}
+        aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
+        className={`inline-flex cursor-pointer items-center justify-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-400/60 ${VARIANT_CLASSES[variant]}`}
+      >
+        {isDark ? (
+          <Sun className={`${ICON_SIZE[variant]} text-amber-400`} aria-hidden />
+        ) : (
+          <Moon
+            className={`${ICON_SIZE[variant]} text-slate-600`}
+            aria-hidden
+          />
+        )}
+      </motion.button>
+    </Tooltip>
   );
 });

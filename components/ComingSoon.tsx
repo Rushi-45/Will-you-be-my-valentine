@@ -44,14 +44,14 @@ export function ComingSoon({ occasion }: Props) {
         <div className="mt-4 flex flex-col gap-3 sm:flex-row">
           <Link
             href="/"
-            className="inline-flex min-h-[48px] items-center justify-center gap-2 rounded-full border border-stone-200 bg-white px-6 py-3 text-sm font-semibold text-stone-700 shadow-sm transition-colors hover:bg-stone-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
+            className="inline-flex min-h-[48px] cursor-pointer items-center justify-center gap-2 rounded-full border border-stone-200 bg-white px-6 py-3 text-sm font-semibold text-stone-700 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:bg-stone-50 hover:shadow-md active:scale-[0.98] dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
           >
             <ArrowLeft className="h-4 w-4" aria-hidden />
             <span>Back to all occasions</span>
           </Link>
           <Link
             href="/valentines"
-            className="inline-flex min-h-[48px] items-center justify-center rounded-full bg-linear-to-r from-rose-500 via-pink-500 to-rose-600 px-6 py-3 text-sm font-semibold text-white shadow-[0_4px_14px_-2px_rgba(190,18,60,0.35)] transition-shadow hover:shadow-[0_6px_18px_-2px_rgba(190,18,60,0.45)]"
+            className="inline-flex min-h-[48px] cursor-pointer items-center justify-center rounded-full bg-linear-to-r from-rose-500 via-pink-500 to-rose-600 px-6 py-3 text-sm font-semibold text-white shadow-[0_4px_14px_-2px_rgba(190,18,60,0.35)] transition-all duration-200 hover:-translate-y-0.5 hover:scale-[1.03] hover:shadow-[0_8px_24px_-4px_rgba(190,18,60,0.5)] active:scale-[0.98]"
           >
             See the Valentine card
           </Link>

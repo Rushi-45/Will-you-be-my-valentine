@@ -1,28 +1,37 @@
 "use client";
 
-import { motion, useScroll, useTransform } from "framer-motion";
+import { motion, useScroll, useTransform, useReducedMotion } from "framer-motion";
 import Link from "next/link";
 import { ArrowRight, Heart, ChevronDown, Sparkles } from "lucide-react";
 import { FloatingHearts } from "@/components/FloatingHearts";
 import { HeroHeadline } from "@/components/HeroHeadline";
+import { useState, useEffect } from "react";
 
 export function ParallaxHero() {
-  // Track the raw window scroll position (not element-relative)
   const { scrollY } = useScroll();
+  const reducedMotion = useReducedMotion();
+  const [isMobile, setIsMobile] = useState(false);
 
-  // Blobs are the furthest layer — move slowest (40px up per 400px scroll)
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 767px)");
+    setIsMobile(mq.matches);
+    const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches);
+    mq.addEventListener("change", handler);
+    return () => mq.removeEventListener("change", handler);
+  }, []);
+
   const blobY = useTransform(scrollY, [0, 400], [0, -120]);
-  // Hearts are mid-distance — slightly faster
   const heartsY = useTransform(scrollY, [0, 400], [0, -70]);
-  // Content is foreground — fastest (but still slower than the page scroll itself)
   const contentY = useTransform(scrollY, [0, 400], [0, -40]);
+
+  const disableParallax = reducedMotion || isMobile;
 
   return (
     <header className="relative w-full overflow-hidden border-b border-stone-200/60 bg-linear-to-b from-white via-pink-50/30 to-white/80 dark:border-slate-800 dark:from-slate-900 dark:via-rose-950/20 dark:to-slate-900/90">
 
       {/* Hearts — deepest, barely moves */}
       <motion.div
-        style={{ y: heartsY }}
+        style={disableParallax ? undefined : { y: heartsY }}
         className="pointer-events-none absolute inset-x-0 -inset-y-20"
       >
         <FloatingHearts />
@@ -30,7 +39,7 @@ export function ParallaxHero() {
 
       {/* Gradient blobs — mid layer, moves a bit more */}
       <motion.div
-        style={{ y: blobY }}
+        style={disableParallax ? undefined : { y: blobY }}
         className="pointer-events-none absolute inset-x-0 -inset-y-20"
       >
         <div className="absolute -left-32 top-20 h-80 w-80 rounded-full bg-rose-200/40 blur-3xl dark:bg-rose-900/25" />
@@ -40,7 +49,7 @@ export function ParallaxHero() {
 
       {/* Content — foreground, moves least */}
       <motion.div
-        style={{ y: contentY }}
+        style={disableParallax ? undefined : { y: contentY }}
         className="relative z-10 mx-auto flex max-w-6xl flex-col items-center gap-7 px-4 py-20 text-center sm:px-6 sm:py-24 md:py-28"
       >
         {/* Eyebrow chip */}
@@ -66,7 +75,7 @@ export function ParallaxHero() {
           </Link>
           <a
             href="#occasions"
-            className="inline-flex min-h-[48px] items-center justify-center rounded-full border border-stone-200 bg-white/80 px-6 py-3 text-sm font-semibold text-stone-700 backdrop-blur-sm transition-colors hover:bg-white hover:text-stone-900 dark:border-slate-700 dark:bg-slate-800/80 dark:text-slate-200 dark:hover:bg-slate-800 dark:hover:text-slate-100"
+            className="inline-flex min-h-[48px] items-center justify-center rounded-full border border-stone-200 bg-white/80 px-6 py-3 text-sm font-semibold text-stone-700 backdrop-blur-sm transition-all duration-200 hover:-translate-y-0.5 hover:bg-white hover:shadow-md hover:text-stone-900 active:scale-[0.98] dark:border-slate-700 dark:bg-slate-800/80 dark:text-slate-200 dark:hover:bg-slate-800 dark:hover:text-slate-100"
           >
             Browse all occasions
           </a>
@@ -75,7 +84,7 @@ export function ParallaxHero() {
         <a
           href="#how"
           aria-label="Scroll to how it works"
-          className="animate-slow-bob mt-4 inline-flex h-10 w-10 items-center justify-center rounded-full border border-stone-200/60 bg-white/80 text-rose-500 backdrop-blur-sm transition-colors hover:bg-white dark:border-slate-700 dark:bg-slate-900/80 dark:text-rose-400"
+          className="animate-slow-bob mt-4 inline-flex h-10 w-10 items-center justify-center rounded-full border border-stone-200/60 bg-white/80 text-rose-500 backdrop-blur-sm transition-all duration-200 hover:scale-110 hover:bg-white hover:shadow-md dark:border-slate-700 dark:bg-slate-900/80 dark:text-rose-400"
         >
           <ChevronDown className="h-5 w-5" aria-hidden />
         </a>
