@@ -1,10 +1,15 @@
 "use server";
 
-import { eq, desc } from "drizzle-orm";
+import { eq, desc, sql } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
-import { cards, type Card } from "@/lib/db/schema";
+import { cards, views, type Card } from "@/lib/db/schema";
 import { getOrCreateUser } from "@/lib/db/users";
+
+export type CardWithStats = Card & {
+  viewCount: number;
+  lastViewedAt: Date | null;
+};
 
 type SaveCardInput = {
   occasion: string;
@@ -63,4 +68,31 @@ export async function listUserCards(): Promise<Card[]> {
     .from(cards)
     .where(eq(cards.userId, user.id))
     .orderBy(desc(cards.createdAt));
+}
+
+/**
+ * Same as listUserCards but with per-card view stats joined in one query.
+ */
+export async function listUserCardsWithStats(): Promise<CardWithStats[]> {
+  const user = await getOrCreateUser();
+  if (!user) return [];
+
+  const rows = await db
+    .select({
+      id: cards.id,
+      userId: cards.userId,
+      occasion: cards.occasion,
+      recipientName: cards.recipientName,
+      senderName: cards.senderName,
+      createdAt: cards.createdAt,
+      viewCount: sql<number>`COUNT(${views.id})::int`,
+      lastViewedAt: sql<Date | null>`MAX(${views.viewedAt})`,
+    })
+    .from(cards)
+    .leftJoin(views, eq(views.cardId, cards.id))
+    .where(eq(cards.userId, user.id))
+    .groupBy(cards.id)
+    .orderBy(desc(cards.createdAt));
+
+  return rows;
 }
