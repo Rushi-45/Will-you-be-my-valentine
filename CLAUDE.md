@@ -14,6 +14,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | `/valentines` | Live | Full card experience |
 | `/birthday`, `/anniversary`, `/graduation`, `/thank-you`, `/get-well`, `/congratulations` | Stub | `ComingSoon` component, occasion-themed hero |
 | `/preview` | Dev only | Icon-primitive demo; returns 404 in production (`process.env.NODE_ENV === "production"`) |
+| `/sign-in/[[...sign-in]]` | Live | Clerk `<SignIn />` page (also opens as a modal from the Header) |
+| `/sign-up/[[...sign-up]]` | Live | Clerk `<SignUp />` page |
+| `/dashboard` | Live | Protected — redirects to `/sign-in` when signed out. Placeholder for saved-cards / activity (DB layer pending) |
 
 ## Commands
 
@@ -97,10 +100,47 @@ For multiple occasions, consider factoring the shared card logic out of `Valenti
 - **Asset paths**: Images/audio in `public/`, referenced with a leading slash.
 - **Animation constants**: `MOTION` in `ValentinePage.tsx` centralizes timing/easing.
 
+## Authentication
+
+Auth is via [Clerk](https://clerk.com) (`@clerk/nextjs` v7). Email + password only; social/magic-link disabled in the Clerk dashboard.
+
+- **Provider**: `<ClerkProvider afterSignOutUrl="/">` wraps `<html>` in `app/layout.tsx`. Sits above the inline theme bootstrap script (still runs pre-hydration).
+- **Middleware**: `middleware.ts` at the project root. `clerkMiddleware` + `createRouteMatcher(["/dashboard(.*)"])` — only `/dashboard` is protected; everything else is public.
+- **Sign-in / sign-up**: `app/sign-in/[[...sign-in]]/page.tsx` and `app/sign-up/[[...sign-up]]/page.tsx`. Catch-all segments let Clerk handle verification / factor sub-routes.
+- **Header integration**: `components/Header.tsx` uses `useUser()` to conditionally render `<SignInButton mode="modal">` when signed out, `<UserButton />` when signed in.
+- **Dashboard**: `app/dashboard/page.tsx` is a server component using `auth()` and `currentUser()` from `@clerk/nextjs/server`. Redirects to `/sign-in` if `userId` is null (the middleware also enforces this).
+
+**Note on Clerk v7:** `SignedIn` / `SignedOut` control components and `afterSignOutUrl` on `<UserButton>` were removed. Use `useUser()` from a client component, or the server-side `<Show when="signed-in">`. Configure `afterSignOutUrl` on `<ClerkProvider>` (or via the env var `NEXT_PUBLIC_CLERK_AFTER_SIGN_OUT_URL`).
+
+## Database (Drizzle + Neon Postgres)
+
+- **Connection**: `lib/db/index.ts` exports a `db` client built on `@neondatabase/serverless` + `drizzle-orm/neon-http`. Edge-compatible.
+- **Schema**: `lib/db/schema.ts`. Single `users` table for now (id = Clerk user_id as primary key, email unique, firstName/lastName/imageUrl/timestamps).
+- **User sync**: `lib/db/users.ts` exports `getOrCreateUser()` — lazy sync helper. Called from server components (`app/dashboard/page.tsx`). On first auth'd request, fetches the Clerk user via `currentUser()` and inserts a row. No webhook needed at this stage.
+- **Migrations**: `drizzle.config.ts` at the project root. `drizzle-kit` reads `.env.local` (via `dotenv` in the config). Generated SQL lands in `drizzle/`.
+- **Scripts**: `npm run db:push` (dev-style direct push), `db:generate` / `db:migrate` (proper migration flow), `db:studio` (web UI).
+- **Why lazy sync, not webhooks**: webhooks require a public URL (or tunnel) for local dev. Lazy sync works in any environment with zero extra config. Trade-off: deletes/updates from the Clerk dashboard don't propagate. Add the webhook (`app/api/webhooks/clerk/route.ts` with `@clerk/nextjs/webhooks`) when that becomes important.
+
 ## Tech stack
 
 - Next.js 16 (App Router) · React 19 · TypeScript 5 · Tailwind CSS 4
 - Framer Motion (animations) · canvas-confetti (celebration) · lucide-react (icons)
+- @clerk/nextjs v7 (authentication)
+- Drizzle ORM + @neondatabase/serverless (database)
 - Vitest + jsdom + Testing Library (Icon primitive)
 
-No environment variables required.
+## Environment variables
+
+| Var | Purpose | Required |
+|---|---|---|
+| `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` | Clerk public key | Yes |
+| `CLERK_SECRET_KEY` | Clerk secret key | Yes |
+| `NEXT_PUBLIC_CLERK_SIGN_IN_URL` | Sign-in path | Optional (default `/sign-in`) |
+| `NEXT_PUBLIC_CLERK_SIGN_UP_URL` | Sign-up path | Optional (default `/sign-up`) |
+| `NEXT_PUBLIC_CLERK_SIGN_IN_FALLBACK_REDIRECT_URL` | Post-sign-in redirect | Optional (default `/dashboard`) |
+| `NEXT_PUBLIC_CLERK_SIGN_UP_FALLBACK_REDIRECT_URL` | Post-sign-up redirect | Optional (default `/dashboard`) |
+| `DATABASE_URL` | Neon Postgres pooled connection string | Yes (for `/dashboard`) |
+| `NEXT_PUBLIC_GA_ID` | Google Analytics ID | Optional |
+| `NEXT_PUBLIC_SITE_URL` | Public site URL for canonical metadata | Optional |
+
+`.env.example` documents all of these. `.env.local` is gitignored (with an `!.env.example` exception so the template stays tracked).

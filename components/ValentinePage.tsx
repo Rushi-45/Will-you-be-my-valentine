@@ -22,6 +22,7 @@ import { Icon } from "@/components/ui/Icon";
 import { AnimatedHeadline } from "@/components/AnimatedHeadline";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Tooltip } from "@/components/ui/Tooltip";
+import { SaveCardButton } from "@/components/SaveCardButton";
 
 const MusicToggle = memo(function MusicToggle({
   musicOn,
@@ -811,6 +812,11 @@ export function ValentinePage() {
                     )}
                     <span>{copied ? "Copied!" : "Copy link"}</span>
                   </motion.button>
+                  <SaveCardButton
+                    occasion="valentines"
+                    recipientName={recipientName}
+                    senderName={senderName}
+                  />
                 </div>
               </motion.div>
             </div>
