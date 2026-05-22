@@ -119,7 +119,8 @@ Auth is via [Clerk](https://clerk.com) (`@clerk/nextjs` v7). Email + password on
 - **User sync**: `lib/db/users.ts` exports `getOrCreateUser()` — lazy sync helper. Called from server components (`app/dashboard/page.tsx`). On first auth'd request, fetches the Clerk user via `currentUser()` and inserts a row. No webhook needed at this stage.
 - **Migrations**: `drizzle.config.ts` at the project root. `drizzle-kit` reads `.env.local` (via `dotenv` in the config). Generated SQL lands in `drizzle/`.
 - **Scripts**: `npm run db:push` (dev-style direct push), `db:generate` / `db:migrate` (proper migration flow), `db:studio` (web UI).
-- **Why lazy sync, not webhooks**: webhooks require a public URL (or tunnel) for local dev. Lazy sync works in any environment with zero extra config. Trade-off: deletes/updates from the Clerk dashboard don't propagate. Add the webhook (`app/api/webhooks/clerk/route.ts` with `@clerk/nextjs/webhooks`) when that becomes important.
+- **Webhook sync** (`app/api/webhooks/clerk/route.ts`): handles `user.created`, `user.updated`, `user.deleted` from Clerk. Uses `verifyWebhook` (Svix-backed) with `CLERK_WEBHOOK_SIGNING_SECRET`. Upserts on create/update, cascade-delete on delete. Returns 500 on handler errors so Clerk retries.
+- **Lazy sync as fallback** (`getOrCreateUser`): handles the race where a user hits `/dashboard` before the webhook arrives. Webhook is the primary path; lazy-sync is the safety net. Both write to the same `users` row via id (Clerk user_id).
 
 ## Tech stack
 
@@ -135,6 +136,7 @@ Auth is via [Clerk](https://clerk.com) (`@clerk/nextjs` v7). Email + password on
 |---|---|---|
 | `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` | Clerk public key | Yes |
 | `CLERK_SECRET_KEY` | Clerk secret key | Yes |
+| `CLERK_WEBHOOK_SIGNING_SECRET` | Verifies incoming Clerk webhooks (`/api/webhooks/clerk`) | Yes (prod) |
 | `NEXT_PUBLIC_CLERK_SIGN_IN_URL` | Sign-in path | Optional (default `/sign-in`) |
 | `NEXT_PUBLIC_CLERK_SIGN_UP_URL` | Sign-up path | Optional (default `/sign-up`) |
 | `NEXT_PUBLIC_CLERK_SIGN_IN_FALLBACK_REDIRECT_URL` | Post-sign-in redirect | Optional (default `/dashboard`) |
