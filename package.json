@@ -10,6 +10,7 @@
     "test": "vitest"
   },
   "dependencies": {
+    "@clerk/nextjs": "^7.4.0",
     "canvas-confetti": "^1.9.4",
     "framer-motion": "^12.34.0",
     "lucide-react": "^0.563.0",

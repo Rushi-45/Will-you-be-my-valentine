@@ -43,7 +43,6 @@ A **production-ready, animated wishing-cards platform** built for resale or your
 | **Personalized links** | `?name=Jane` and `?sender=Rushi` |
 | **SEO & sharing** | Open Graph, Twitter cards, dynamic metadata for `?name=` links |
 | **Responsive & touch-friendly** | 48px tap targets, safe-area insets honoured |
-| **No env vars** | Everything is driven by config files |
 
 ---
 
@@ -61,11 +60,13 @@ A **production-ready, animated wishing-cards platform** built for resale or your
 git clone <your-repo-url>
 cd will-you-be-my-valentine
 npm install
+cp .env.example .env.local         # then fill in your Clerk keys (see Auth below)
 npm run dev
 ```
 
 - `http://localhost:3000` — occasion selector
 - `http://localhost:3000/valentines?name=Jane` — personalized Valentine card
+- `http://localhost:3000/dashboard` — protected dashboard (sign in to access)
 
 ---
 
@@ -95,6 +96,31 @@ Example: `https://yoursite.com/valentines?name=Jane&sender=Rushi`
 
 ---
 
+## Authentication (Clerk)
+
+Auth is wired via [Clerk](https://clerk.com) — free up to 10k MAU. Email + password only at launch.
+
+**Routes:**
+- `/sign-in` — sign-in page (also opens as a modal from the header "Sign in" button)
+- `/sign-up` — sign-up page
+- `/dashboard` — protected; redirects to `/sign-in` when signed out
+
+**Setup:**
+1. Create a free app at [dashboard.clerk.com](https://dashboard.clerk.com)
+2. In Clerk → **User & Authentication** → enable Email + Password, disable everything else (Phone, OAuth, magic links)
+3. Copy the publishable + secret keys from **API Keys** into `.env.local`:
+   ```
+   NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_...
+   CLERK_SECRET_KEY=sk_test_...
+   ```
+4. The remaining `NEXT_PUBLIC_CLERK_SIGN_IN_URL` / `SIGN_UP_URL` / fallback URLs in `.env.example` keep defaults; no changes needed.
+
+**Production (Vercel):** add the same keys to the project's environment variables before deploying.
+
+**What's gated:** only `/dashboard` (see `middleware.ts`). All occasion routes, the landing page, and `/sign-in` / `/sign-up` stay public.
+
+---
+
 ## Theme
 
 - Light/dark toggle in the header on every card route.
@@ -112,7 +138,7 @@ Example: `https://yoursite.com/valentines?name=Jane&sender=Rushi`
 npm run build
 ```
 
-No env vars required.
+Requires Clerk env vars (see [Authentication](#authentication-clerk)).
 
 ### Vercel
 
