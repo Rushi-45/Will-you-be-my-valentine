@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
-import { auth, currentUser } from "@clerk/nextjs/server";
+import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Heart, Sparkles } from "lucide-react";
+import { Heart, Sparkles, Bookmark, ArrowRight } from "lucide-react";
 import { Header } from "@/components/Header";
+import { getOrCreateUser } from "@/lib/db/users";
+import { listUserCards } from "@/app/actions/cards";
 
 export const metadata: Metadata = {
   title: "Dashboard",
@@ -11,10 +13,10 @@ export const metadata: Metadata = {
 };
 
 export default async function DashboardPage() {
-  const { userId } = await auth();
-  if (!userId) redirect("/sign-in");
-  const user = await currentUser();
-  const firstName = user?.firstName ?? user?.username ?? "friend";
+  const user = await getOrCreateUser();
+  if (!user) redirect("/sign-in");
+  const firstName = user.firstName ?? user.email.split("@")[0] ?? "friend";
+  const cards = await listUserCards();
 
   return (
     <main className="relative min-h-screen bg-stone-50 pt-24 pb-16 text-stone-800 dark:bg-slate-950 dark:text-slate-100">
@@ -41,21 +43,35 @@ export default async function DashboardPage() {
           </p>
         </header>
 
-        {/* Placeholder section */}
-        <section className="rounded-2xl border border-stone-200/70 bg-white/80 p-8 shadow-sm backdrop-blur-sm dark:border-slate-800 dark:bg-slate-900/80">
-          <div className="flex flex-col items-center gap-3 text-center">
+        {/* Saved cards summary */}
+        <Link
+          href="/dashboard/cards"
+          className="group flex items-center justify-between gap-4 rounded-2xl border border-stone-200/70 bg-white/80 p-6 shadow-sm backdrop-blur-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md dark:border-slate-800 dark:bg-slate-900/80"
+        >
+          <div className="flex items-center gap-4">
             <div className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-linear-to-br from-rose-100 to-pink-100 dark:from-rose-950/50 dark:to-pink-950/50">
-              <Sparkles className="h-5 w-5 text-rose-500 dark:text-rose-400" aria-hidden />
+              <Bookmark className="h-5 w-5 text-rose-500 dark:text-rose-400" aria-hidden />
             </div>
-            <h2 className="text-lg font-semibold text-stone-800 dark:text-slate-100">
-              Saved cards coming soon
-            </h2>
-            <p className="max-w-md text-sm text-stone-600 dark:text-slate-400">
-              You&apos;ll be able to save personalized cards, track who&apos;s opened them, and
-              re-share with a single click.
-            </p>
+            <div>
+              <h2 className="text-lg font-semibold text-stone-800 dark:text-slate-100">
+                {cards.length === 0 ? "No saved cards yet" : `${cards.length} saved card${cards.length === 1 ? "" : "s"}`}
+              </h2>
+              <p className="text-sm text-stone-600 dark:text-slate-400">
+                {cards.length === 0
+                  ? "Personalize a card and click Save to dashboard."
+                  : "Browse, re-open, or share your saved cards."}
+              </p>
+            </div>
           </div>
-        </section>
+          <ArrowRight
+            className="h-5 w-5 shrink-0 text-stone-400 transition-transform duration-200 group-hover:translate-x-1 group-hover:text-rose-500 dark:text-slate-500 dark:group-hover:text-rose-400"
+            aria-hidden
+          />
+        </Link>
+
+        <p className="text-xs text-stone-400 dark:text-slate-500">
+          Account: {user.email} · created {user.createdAt.toLocaleDateString()}
+        </p>
       </div>
     </main>
   );

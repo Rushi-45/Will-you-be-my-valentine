@@ -8,6 +8,7 @@ import { ClosingCTA } from "@/components/ClosingCTA";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { ParallaxHero } from "@/components/ParallaxHero";
 import { CigaretteScroll } from "@/components/CigaretteScroll";
+import { AuthControls } from "@/components/AuthControls";
 import { occasions } from "@/config/occasions";
 import { Tooltip } from "@/components/ui/Tooltip";
 
@@ -42,8 +43,9 @@ export async function generateMetadata(): Promise<Metadata> {
 export default function Home() {
   return (
     <div className="relative flex min-h-screen flex-col items-center bg-stone-50 text-stone-800 dark:bg-slate-950 dark:text-slate-100">
-      {/* Floating theme toggle (landing only) */}
-      <div className="fixed right-4 top-4 z-40 sm:right-6 sm:top-6">
+      {/* Floating auth + theme toggle (landing only) */}
+      <div className="fixed right-4 top-4 z-40 flex items-center gap-3 sm:right-6 sm:top-6">
+        <AuthControls />
         <ThemeToggle variant="floating" />
       </div>
 

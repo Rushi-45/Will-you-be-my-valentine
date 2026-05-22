@@ -121,6 +121,34 @@ Auth is wired via [Clerk](https://clerk.com) — free up to 10k MAU. Email + pas
 
 ---
 
+## Database (Neon + Drizzle)
+
+App data lives in a Postgres database — currently a single `users` table that mirrors Clerk identities. New users are lazily synced into the DB the first time they hit `/dashboard` (via `getOrCreateUser()` in `lib/db/users.ts`).
+
+**Setup:**
+1. Create a free serverless Postgres project at [neon.tech](https://neon.tech)
+2. Copy the **pooled** connection string (looks like `postgresql://user:pass@ep-xxx-pooler.region.aws.neon.tech/dbname?sslmode=require`)
+3. Add it to `.env.local`:
+   ```
+   DATABASE_URL=postgresql://...
+   ```
+4. Push the schema to your database:
+   ```bash
+   npm run db:push
+   ```
+
+**Available scripts:**
+| Command | Purpose |
+|---|---|
+| `npm run db:push` | Push schema changes directly (fastest for dev) |
+| `npm run db:generate` | Generate SQL migration files in `drizzle/` |
+| `npm run db:migrate` | Apply pending migrations |
+| `npm run db:studio` | Open Drizzle Studio (web UI to browse data) |
+
+**Production (Vercel):** add `DATABASE_URL` to the project env vars. Run `npm run db:push` once locally pointing at the production DB, or trigger migrations from a deploy hook.
+
+---
+
 ## Theme
 
 - Light/dark toggle in the header on every card route.

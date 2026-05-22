@@ -112,11 +112,21 @@ Auth is via [Clerk](https://clerk.com) (`@clerk/nextjs` v7). Email + password on
 
 **Note on Clerk v7:** `SignedIn` / `SignedOut` control components and `afterSignOutUrl` on `<UserButton>` were removed. Use `useUser()` from a client component, or the server-side `<Show when="signed-in">`. Configure `afterSignOutUrl` on `<ClerkProvider>` (or via the env var `NEXT_PUBLIC_CLERK_AFTER_SIGN_OUT_URL`).
 
+## Database (Drizzle + Neon Postgres)
+
+- **Connection**: `lib/db/index.ts` exports a `db` client built on `@neondatabase/serverless` + `drizzle-orm/neon-http`. Edge-compatible.
+- **Schema**: `lib/db/schema.ts`. Single `users` table for now (id = Clerk user_id as primary key, email unique, firstName/lastName/imageUrl/timestamps).
+- **User sync**: `lib/db/users.ts` exports `getOrCreateUser()` — lazy sync helper. Called from server components (`app/dashboard/page.tsx`). On first auth'd request, fetches the Clerk user via `currentUser()` and inserts a row. No webhook needed at this stage.
+- **Migrations**: `drizzle.config.ts` at the project root. `drizzle-kit` reads `.env.local` (via `dotenv` in the config). Generated SQL lands in `drizzle/`.
+- **Scripts**: `npm run db:push` (dev-style direct push), `db:generate` / `db:migrate` (proper migration flow), `db:studio` (web UI).
+- **Why lazy sync, not webhooks**: webhooks require a public URL (or tunnel) for local dev. Lazy sync works in any environment with zero extra config. Trade-off: deletes/updates from the Clerk dashboard don't propagate. Add the webhook (`app/api/webhooks/clerk/route.ts` with `@clerk/nextjs/webhooks`) when that becomes important.
+
 ## Tech stack
 
 - Next.js 16 (App Router) · React 19 · TypeScript 5 · Tailwind CSS 4
 - Framer Motion (animations) · canvas-confetti (celebration) · lucide-react (icons)
 - @clerk/nextjs v7 (authentication)
+- Drizzle ORM + @neondatabase/serverless (database)
 - Vitest + jsdom + Testing Library (Icon primitive)
 
 ## Environment variables
@@ -129,6 +139,7 @@ Auth is via [Clerk](https://clerk.com) (`@clerk/nextjs` v7). Email + password on
 | `NEXT_PUBLIC_CLERK_SIGN_UP_URL` | Sign-up path | Optional (default `/sign-up`) |
 | `NEXT_PUBLIC_CLERK_SIGN_IN_FALLBACK_REDIRECT_URL` | Post-sign-in redirect | Optional (default `/dashboard`) |
 | `NEXT_PUBLIC_CLERK_SIGN_UP_FALLBACK_REDIRECT_URL` | Post-sign-up redirect | Optional (default `/dashboard`) |
+| `DATABASE_URL` | Neon Postgres pooled connection string | Yes (for `/dashboard`) |
 | `NEXT_PUBLIC_GA_ID` | Google Analytics ID | Optional |
 | `NEXT_PUBLIC_SITE_URL` | Public site URL for canonical metadata | Optional |
 
