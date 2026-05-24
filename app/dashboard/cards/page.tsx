@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Bookmark, ArrowLeft, ExternalLink, Sparkles } from "lucide-react";
+import { Bookmark, ArrowLeft, ExternalLink, Sparkles, Eye } from "lucide-react";
 import { Header } from "@/components/Header";
 import { DeleteCardButton } from "@/components/DeleteCardButton";
 import { getOrCreateUser } from "@/lib/db/users";
-import { listUserCards } from "@/app/actions/cards";
+import { listUserCardsWithStats } from "@/app/actions/cards";
 import { occasions } from "@/config/occasions";
 
 export const metadata: Metadata = {
@@ -22,10 +22,24 @@ function cardUrlFor(occasion: string, recipientName: string | null, senderName: 
   return `/${occasion}${q ? `?${q}` : ""}`;
 }
 
+function relativeTime(date: Date | null): string {
+  if (!date) return "never";
+  const diff = Date.now() - date.getTime();
+  const sec = Math.floor(diff / 1000);
+  if (sec < 60) return "just now";
+  const min = Math.floor(sec / 60);
+  if (min < 60) return `${min}m ago`;
+  const hr = Math.floor(min / 60);
+  if (hr < 24) return `${hr}h ago`;
+  const day = Math.floor(hr / 24);
+  if (day < 30) return `${day}d ago`;
+  return date.toLocaleDateString();
+}
+
 export default async function CardsPage() {
   const user = await getOrCreateUser();
   if (!user) redirect("/sign-in");
-  const cards = await listUserCards();
+  const cards = await listUserCardsWithStats();
 
   return (
     <main className="relative min-h-screen bg-stone-50 pt-24 pb-16 text-stone-800 dark:bg-slate-950 dark:text-slate-100">
@@ -115,6 +129,15 @@ export default async function CardsPage() {
                       </>
                     )}
                   </p>
+                  <div className="flex items-center gap-3 text-[0.6875rem] font-medium text-stone-500 dark:text-slate-500">
+                    <span className="inline-flex items-center gap-1">
+                      <Eye className="h-3 w-3" aria-hidden />
+                      {card.viewCount} {card.viewCount === 1 ? "view" : "views"}
+                    </span>
+                    {card.lastViewedAt && (
+                      <span>· last opened {relativeTime(card.lastViewedAt)}</span>
+                    )}
+                  </div>
                   <Link
                     href={cardUrlFor(card.occasion, card.recipientName, card.senderName)}
                     className="mt-auto inline-flex w-fit cursor-pointer items-center gap-1.5 text-xs font-semibold text-rose-600 transition-colors hover:text-rose-700 dark:text-rose-400 dark:hover:text-rose-300"

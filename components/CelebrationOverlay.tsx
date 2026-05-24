@@ -209,6 +209,7 @@ function CelebrationOverlayComponent({ cornerCatSrc, huggingCatSrc }: Props) {
       className="pointer-events-none fixed inset-0 z-30 overflow-hidden"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
+      exit={{ opacity: 0, transition: { duration: 0.6, ease: [0.4, 0, 0.2, 1] } }}
       transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
       aria-hidden
     >
