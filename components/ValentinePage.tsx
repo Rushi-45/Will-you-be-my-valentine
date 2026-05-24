@@ -136,6 +136,7 @@ export function ValentinePage() {
   const [yesScale, setYesScale] = useState(1);
   const [noScale, setNoScale] = useState(1);
   const [isAccepted, setIsAccepted] = useState(false);
+  const [showCelebration, setShowCelebration] = useState(false);
   const [isConfettiRunning, setIsConfettiRunning] = useState(false);
   const [musicOn, setMusicOn] = useState(false);
   const [shareUrl, setShareUrl] = useState("");
@@ -288,7 +289,11 @@ export function ValentinePage() {
   const handleYesClick = useCallback(() => {
     if (isConfettiRunning) return;
     setIsAccepted(true);
+    setShowCelebration(true);
     triggerConfetti();
+    // Auto-dismiss the YAY overlay so the success card underneath is visible.
+    // Keep it long enough to register but short enough not to block reading.
+    window.setTimeout(() => setShowCelebration(false), 3500);
   }, [isConfettiRunning, triggerConfetti]);
 
   useEffect(() => {
@@ -419,12 +424,14 @@ export function ValentinePage() {
       </AnimatePresence>
 
       <FloatingHearts />
-      {isAccepted && (
-        <CelebrationOverlay
-          cornerCatSrc={valentineConfig.images.cornerCat}
-          huggingCatSrc={valentineConfig.images.huggingCat}
-        />
-      )}
+      <AnimatePresence>
+        {showCelebration && (
+          <CelebrationOverlay
+            cornerCatSrc={valentineConfig.images.cornerCat}
+            huggingCatSrc={valentineConfig.images.huggingCat}
+          />
+        )}
+      </AnimatePresence>
 
       <AnimatePresence mode="wait">
         {!isAccepted && (
@@ -785,7 +792,7 @@ export function ValentinePage() {
                 <p className="mb-2 text-[0.75rem] font-semibold uppercase tracking-wider text-stone-500 sm:text-[0.8125rem] dark:text-slate-400">
                   Share the love
                 </p>
-                <div className="flex flex-col gap-3 sm:flex-row sm:justify-center sm:gap-4">
+                <div className="flex flex-col items-stretch gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-center sm:gap-3">
                   <a
                     href={whatsAppShareUrl}
                     target="_blank"
